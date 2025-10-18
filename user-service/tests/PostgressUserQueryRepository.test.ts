@@ -1,9 +1,10 @@
-import { UserRepository } from 'repositories/UserRepository';
+import { PostgressUserQueryRepository } from '@db/repositories/PostgressUserQueryRepository';
 import prisma from '@db/prisma';
 import { randomUUID } from 'crypto';
+import { User } from 'domain/User';
 
-describe('UserRepository.getUserById', () => {
-  const repo = new UserRepository();
+describe('User Query Repository - find user by id', () => {
+  const repo = new PostgressUserQueryRepository();
   afterAll(async () => {
     await prisma.$disconnect();
   });
@@ -16,22 +17,30 @@ describe('UserRepository.getUserById', () => {
       } as any),
     } as any);
 
-    const found = await repo.getUserById(created.id);
+    const found = await repo.getById(created.id);
 
-    expect(found).toEqual(created);
+    const expected = new User(
+      created.id,
+      'Erin',
+      'Example',
+      created.createdAt,
+      created.updatedAt,
+    );
+    expect(found).toEqual(expected);
   });
 
   test('returns null when no user exists for the UUID', async () => {
     const missingId = randomUUID();
 
-    const found = await repo.getUserById(missingId);
+    const found = await repo.getById(missingId);
     
     expect(found).toBeNull();
   });
 
   test('throws on invalid UUID input', async () => {
-    await expect(repo.getUserById('not-a-uuid'))
+    await expect(repo.getById('not-a-uuid'))
       .rejects
       .toThrow('Invalid UUID');
   });
 });
+
