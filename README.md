@@ -19,7 +19,14 @@ This monorepo contains a Node.js Express service (`user-service`)
 npm install --prefix user-service
 ```
 
-2. Local run (optional)
+2. Run tests
+
+```bash
+# user-service test
+npm run test --prefix user-service
+```
+
+3. Local run (optional)
 
 ```bash
 npm run start --prefix user-service
