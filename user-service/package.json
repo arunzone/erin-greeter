@@ -8,11 +8,26 @@
     "prestart": "npm run build",
     "start": "node dist/index.js",
     "dev": "nodemon --watch src --exec ts-node src/index.ts",
+    "pretest": "npm run test:db:setup",
     "test": "jest --runInBand",
-    "test:watch": "jest --watch"
+    "posttest": "npm run test:db:down",
+    "test:watch": "jest --watch",
+    "test:db:up": "sh -c 'cd .. && if command -v docker-compose >/dev/null 2>&1; then docker-compose -f docker-compose.yml up -d; else docker compose -f docker-compose.yml up -d; fi'",
+    "test:db:wait": "sh -c 'cd .. && if command -v docker-compose >/dev/null 2>&1; then docker-compose -f docker-compose.yml exec -T postgres sh -c \"until pg_isready -h 127.0.0.1 -p 5432 -U ${POSTGRES_USER:-app} -d ${POSTGRES_DB:-user_service}; do sleep 1; done\"; else docker compose -f docker-compose.yml exec -T postgres sh -c \"until pg_isready -h 127.0.0.1 -p 5432 -U ${POSTGRES_USER:-app} -d ${POSTGRES_DB:-user_service}; do sleep 1; done\"; fi'",
+    "test:db:apply": "sh -c 'for i in $(seq 1 20); do npm run liquibase:dropAll && npm run liquibase:update && exit 0 || echo \"Waiting for DB... ($i)\" && sleep 2; done; echo \"Failed to apply schema\"; exit 1'",
+    "test:db:setup": "npm run test:db:up && npm run prisma:generate && npm run test:db:wait && npm run test:db:apply",
+    "test:db:down": "sh -c 'cd .. && if command -v docker-compose >/dev/null 2>&1; then docker-compose -f docker-compose.yml down; else docker compose -f docker-compose.yml down; fi'",
+    "prisma:generate": "prisma generate",
+    "prisma:pull": "prisma db pull",
+    "liquibase:dropAll": "sh -c 'cd .. && if command -v docker-compose >/dev/null 2>&1; then docker-compose -f docker-compose.yml run --rm liquibase --search-path=/liquibase/changelog --changelog-file=changelog-master.yaml --url=jdbc:postgresql://postgres:5432/${POSTGRES_DB:-user_service} --username=${POSTGRES_USER:-app} --password=${POSTGRES_PASSWORD:-app} dropAll; else docker compose -f docker-compose.yml run --rm liquibase --search-path=/liquibase/changelog --changelog-file=changelog-master.yaml --url=jdbc:postgresql://postgres:5432/${POSTGRES_DB:-user_service} --username=${POSTGRES_USER:-app} --password=${POSTGRES_PASSWORD:-app} dropAll; fi'",
+    "liquibase:update": "sh -c 'cd .. && if command -v docker-compose >/dev/null 2>&1; then docker-compose -f docker-compose.yml run --rm liquibase --search-path=/liquibase/changelog --changelog-file=changelog-master.yaml --url=jdbc:postgresql://postgres:5432/${POSTGRES_DB:-user_service} --username=${POSTGRES_USER:-app} --password=${POSTGRES_PASSWORD:-app} update; else docker compose -f docker-compose.yml run --rm liquibase --search-path=/liquibase/changelog --changelog-file=changelog-master.yaml --url=jdbc:postgresql://postgres:5432/${POSTGRES_DB:-user_service} --username=${POSTGRES_USER:-app} --password=${POSTGRES_PASSWORD:-app} update; fi'",
+    "liquibase:status": "sh -c 'cd .. && if command -v docker-compose >/dev/null 2>&1; then docker-compose -f docker-compose.yml run --rm liquibase --search-path=/liquibase/changelog --changelog-file=changelog-master.yaml --url=jdbc:postgresql://postgres:5432/${POSTGRES_DB:-user_service} --username=${POSTGRES_USER:-app} --password=${POSTGRES_PASSWORD:-app} status; else docker compose -f docker-compose.yml run --rm liquibase --search-path=/liquibase/changelog --changelog-file=changelog-master.yaml --url=jdbc:postgresql://postgres:5432/${POSTGRES_DB:-user_service} --username=${POSTGRES_USER:-app} --password=${POSTGRES_PASSWORD:-app} status; fi'",
+    "liquibase:rollbackCount": "sh -c 'cd .. && if command -v docker-compose >/dev/null 2>&1; then docker-compose -f docker-compose.yml run --rm liquibase --search-path=/liquibase/changelog --changelog-file=changelog-master.yaml --url=jdbc:postgresql://postgres:5432/${POSTGRES_DB:-user_service} --username=${POSTGRES_USER:-app} --password=${POSTGRES_PASSWORD:-app} rollbackCount 1; else docker compose -f docker-compose.yml run --rm liquibase --search-path=/liquibase/changelog --changelog-file=changelog-master.yaml --url=jdbc:postgresql://postgres:5432/${POSTGRES_DB:-user_service} --username=${POSTGRES_USER:-app} --password=${POSTGRES_PASSWORD:-app} rollbackCount 1; fi'"
   },
   "dependencies": {
-    "express": "^4.19.2"
+    "express": "^4.19.2",
+    "@prisma/client": "^5.18.0",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "nodemon": "^3.0.1",
@@ -24,7 +39,9 @@
     "@types/supertest": "^2.0.16",
     "ts-jest": "^29.1.2",
     "ts-node": "^10.9.2",
-    "typescript": "^5.4.5"
+    "typescript": "^5.4.5",
+    "prisma": "^5.18.0",
+    "dotenv": "^16.4.5"
   },
   "jest": {
     "preset": "ts-jest",
@@ -38,6 +55,14 @@
         "ts-jest",
         { "tsconfig": "tsconfig.jest.json" }
       ]
+    },
+    "setupFilesAfterEnv": ["<rootDir>/tests/jest.setup.ts"],
+    "moduleDirectories": [
+      "node_modules",
+      "src"
+    ],
+    "moduleNameMapper": {
+      "^@db/(.*)$": "<rootDir>/src/$1"
     }
   }
 }

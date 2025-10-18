@@ -1,0 +1,39 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0001-create-user
+      author: cascade
+      changes:
+        - sql:
+            sql: "CREATE EXTENSION IF NOT EXISTS pgcrypto;"
+        - createTable:
+            tableName: user
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: first_name
+                  type: text
+                  constraints:
+                    nullable: true
+              - column:
+                  name: last_name
+                  type: text
+                  constraints:
+                    nullable: true
+              - column:
+                  name: created_at
+                  type: timestamptz
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamptz
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false

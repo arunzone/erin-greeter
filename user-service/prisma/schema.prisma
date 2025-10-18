@@ -1,0 +1,48 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model Databasechangelog {
+  id            String   @db.VarChar(255)
+  author        String   @db.VarChar(255)
+  filename      String   @db.VarChar(255)
+  dateexecuted  DateTime @db.Timestamp(6)
+  orderexecuted Int
+  exectype      String   @db.VarChar(10)
+  md5sum        String?  @db.VarChar(35)
+  description   String?  @db.VarChar(255)
+  comments      String?  @db.VarChar(255)
+  tag           String?  @db.VarChar(255)
+  liquibase     String?  @db.VarChar(20)
+  contexts      String?  @db.VarChar(255)
+  labels        String?  @db.VarChar(255)
+  deploymentId  String?  @map("deployment_id") @db.VarChar(10)
+
+  @@map("databasechangelog")
+  @@ignore
+}
+
+model Databasechangeloglock {
+  id          Int       @id
+  locked      Boolean
+  lockgranted DateTime? @db.Timestamp(6)
+  lockedby    String?   @db.VarChar(255)
+
+  @@map("databasechangeloglock")
+}
+
+model User {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  firstName String?  @map("first_name")
+  lastName  String?  @map("last_name")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  @@map("user")
+}
