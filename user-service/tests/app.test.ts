@@ -1,6 +1,5 @@
 import request from 'supertest';
 import app from '../src/app';
-import { describe, it, expect } from '@jest/globals';
 
 describe('Health Check', () => {
   it('should return status code 200', async () => {

@@ -2,7 +2,9 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "types": ["node", "jest"],
-    "noEmit": true
+    "noEmit": true,
+    "composite": true,
+    "rootDir": "."
   },
   "include": [
     "src/**/*.ts",
