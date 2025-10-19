@@ -1,30 +1,23 @@
-import express, { Request, Response } from 'express';
+import 'reflect-metadata';
+import express from 'express';
+import { InversifyExpressServer } from 'inversify-express-utils';
 
-import UserController from 'controller/UserController';
+import { errorHandler } from 'controller/middleware/errorHandler';
 import container from 'di/container';
-import { TYPES } from 'di/types';
 
-import prisma from './prisma';
+// Ensure controllers are registered
+import 'controller/UserController';
+import 'controller/HealthController';
 
-const app = express();
+const server = new InversifyExpressServer(container);
 
-app.use(express.json());
+server
+  .setConfig((app: express.Application) => {
+    app.use(express.json());
+  })
+  .setErrorConfig((app: express.Application) => {
+    app.use(errorHandler);
+  });
 
-// Register routes via DI-resolved controller
-const userController = container.get<UserController>(TYPES.UserController);
-app.use('/', userController.router);
-
-app.get('/healthz', (req: Request, res: Response) => {
-  res.status(200).json({ status: 'ok' });
-});
-
-app.get('/health/db', async (req: Request, res: Response) => {
-  try {
-    const result = await prisma.$queryRawUnsafe('SELECT 1 as ok');
-    res.status(200).json({ db: 'ok', result });
-  } catch (_err) {
-    res.status(500).json({ db: 'error' });
-  }
-});
-
+const app = server.build();
 export default app;

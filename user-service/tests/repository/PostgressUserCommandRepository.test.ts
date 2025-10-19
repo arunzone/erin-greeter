@@ -1,6 +1,6 @@
 import prisma from '@db/prisma';
-import { PostgressUserCommandRepository } from 'repository/PostgressUserCommandRepository';
 import { User } from 'domain/User';
+import { PostgressUserCommandRepository } from 'repository/PostgressUserCommandRepository';
 
 describe('User Command Repository - create user', () => {
   const repo = new PostgressUserCommandRepository();
@@ -9,7 +9,7 @@ describe('User Command Repository - create user', () => {
     await prisma.$disconnect();
   });
 
-  test('creates and returns the persisted user', async () => {
+  test('should create and return the persisted user', async () => {
     const data = { firstName: 'Erin', lastName: 'Example' };
 
     const created = await repo.create(data);
@@ -19,7 +19,17 @@ describe('User Command Repository - create user', () => {
     expect(created).toEqual(expected);
   });
 
-  test('throws when given invalid data that violates domain rules', async () => {
+  test('should create user without lastName and maps it to undefined', async () => {
+    const data = { firstName: 'Erin' };
+
+    const created = await repo.create(data as any);
+
+    const expected = new User(created.id, 'Erin', undefined, created.createdAt, created.updatedAt);
+
+    expect(created).toEqual(expected);
+  });
+
+  test('should throw when given invalid data that violates domain rules', async () => {
     await expect(repo.create({ firstName: '', lastName: 'Example' }) as any).rejects.toThrow();
   });
 });

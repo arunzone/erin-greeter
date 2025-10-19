@@ -10,7 +10,7 @@
     "start": "node dist/index.js",
     "dev": "nodemon --watch src --exec ts-node src/index.ts",
     "pretest": "npm run test:db:setup",
-    "test": "jest --runInBand",
+    "test": "jest --runInBand --coverage",
     "posttest": "npm run test:db:down",
     "test:watch": "jest --watch",
     "test:watch:session": "bash scripts/watch-with-db.sh",
@@ -32,8 +32,9 @@
   },
   "dependencies": {
     "@prisma/client": "^5.18.0",
-    "express": "^4.19.2",
+    "express": "^4.21.2",
     "inversify": "^6.2.2",
+    "inversify-express-utils": "^6.5.0",
     "reflect-metadata": "^0.2.2",
     "zod": "^3.23.8"
   },
@@ -90,6 +91,32 @@
     ],
     "moduleNameMapper": {
       "^@db/(.*)$": "<rootDir>/src/$1"
+    },
+    "collectCoverageFrom": [
+      "src/**/*.{ts,tsx}",
+      "!src/**/*.d.ts",
+      "!src/**/index.ts",
+      "!src/**/dto/**",
+      "!src/**/di/**",
+      "!src/**/prisma/**"
+    ],
+    "coverageDirectory": "coverage",
+    "coverageReporters": [
+      "text",
+      "lcov",
+      "html"
+    ],
+    "coveragePathIgnorePatterns": [
+      "/node_modules/",
+      "/tests/"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 72,
+        "functions": 95,
+        "lines": 96,
+        "statements": 96
+      }
     }
   },
   "lint-staged": {

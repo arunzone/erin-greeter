@@ -16,3 +16,6 @@ cdk.context.json
 
 # Env
 .env
+
+# coverage
+user-service/coverage/

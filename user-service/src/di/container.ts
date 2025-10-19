@@ -2,7 +2,6 @@ import 'reflect-metadata';
 import { PrismaClient } from '@prisma/client';
 import { Container } from 'inversify';
 
-import UserController from '../controller/UserController';
 import prisma from '../prisma';
 import { UserCommandRepository } from '../repository/interface/UserCommandRepository';
 import { UserQueryRepository } from '../repository/interface/UserQueryRepository';
@@ -18,7 +17,6 @@ const container = new Container({ defaultScope: 'Singleton' });
 container.bind<PrismaClient>(TYPES.Prisma).toConstantValue(prisma);
 
 container.bind<UserService>(TYPES.UserService).to(UserService);
-container.bind<UserController>(TYPES.UserController).to(UserController);
 
 container
   .bind<UserCommandRepository<any>>(TYPES.UserCommandRepository)
