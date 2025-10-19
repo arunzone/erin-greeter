@@ -12,6 +12,10 @@
     "test": "jest --runInBand",
     "posttest": "npm run test:db:down",
     "test:watch": "jest --watch",
+    "test:watch:session": "bash scripts/watch-with-db.sh",
+    "lint": "eslint . --ext .ts",
+    "lint:fix": "eslint . --ext .ts --fix",
+    "prepare": "husky install",
     "test:db:up": "sh -c 'cd .. && if command -v docker-compose >/dev/null 2>&1; then docker-compose -f docker-compose.yml up -d; else docker compose -f docker-compose.yml up -d; fi'",
     "test:db:wait": "sh -c 'cd .. && if command -v docker-compose >/dev/null 2>&1; then docker-compose -f docker-compose.yml exec -T postgres sh -c \"until pg_isready -h 127.0.0.1 -p 5432 -U ${POSTGRES_USER:-app} -d ${POSTGRES_DB:-user_service}; do sleep 1; done\"; else docker compose -f docker-compose.yml exec -T postgres sh -c \"until pg_isready -h 127.0.0.1 -p 5432 -U ${POSTGRES_USER:-app} -d ${POSTGRES_DB:-user_service}; do sleep 1; done\"; fi'",
     "test:db:apply": "sh -c 'for i in $(seq 1 20); do npm run liquibase:dropAll && npm run liquibase:update && exit 0 || echo \"Waiting for DB... ($i)\" && sleep 2; done; echo \"Failed to apply schema\"; exit 1'",
@@ -64,5 +68,9 @@
     "moduleNameMapper": {
       "^@db/(.*)$": "<rootDir>/src/$1"
     }
+  },
+  "lint-staged": {
+    "**/*.{ts,tsx,js,jsx}": "eslint --fix",
+    "**/*.{json,md,yml,yaml}": "prettier --write"
   }
 }

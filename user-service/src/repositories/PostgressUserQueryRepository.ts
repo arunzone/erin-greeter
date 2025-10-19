@@ -12,7 +12,7 @@ export class PostgressUserQueryRepository implements UserQueryRepository<User>{
     if (!found) return null;
     return new User(
       found.id,
-      found.firstName ?? '',
+      found.firstName,
       found.lastName ?? '',
       found.createdAt,
       found.updatedAt,

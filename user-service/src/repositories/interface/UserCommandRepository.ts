@@ -1,3 +1,5 @@
+export type CreateUserDto = { firstName: string; lastName?: string };
+
 export interface UserCommandRepository<T> {
-  create(data: T): Promise<T>;
+  create(data: CreateUserDto): Promise<T>;
 }

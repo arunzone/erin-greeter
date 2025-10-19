@@ -1,7 +1,7 @@
 databaseChangeLog:
   - changeSet:
       id: 0001-create-user
-      author: cascade
+      author: Arun
       changes:
         - sql:
             sql: "CREATE EXTENSION IF NOT EXISTS pgcrypto;"
@@ -19,7 +19,7 @@ databaseChangeLog:
                   name: first_name
                   type: text
                   constraints:
-                    nullable: true
+                    nullable: false
               - column:
                   name: last_name
                   type: text
