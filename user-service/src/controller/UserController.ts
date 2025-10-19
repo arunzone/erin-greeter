@@ -2,13 +2,13 @@ import { Request, Response } from 'express';
 import { inject } from 'inversify';
 import { controller, httpPost, request, response } from 'inversify-express-utils';
 
-import { TYPES } from 'di/types';
-import { User } from 'domain/User';
-import UserService from 'service/UserService';
-import { userCreateSchema } from 'validation/zod';
+import { TYPES } from 'di/types.js';
+import { User } from 'domain/User.js';
+import UserService from 'service/UserService.js';
+import { userCreateSchema } from 'validation/zod.js';
 
-import { toCreateUserDto, toUserResponse } from './dto/UserDtos';
-import { validateBody } from './middleware/validate';
+import { toCreateUserDto, toUserResponse } from 'controller/dto/UserDtos.js';
+import { validateBody } from 'controller/middleware/validate.js';
 
 @controller('/')
 export class UserController {

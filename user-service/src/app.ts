@@ -2,12 +2,12 @@ import 'reflect-metadata';
 import express from 'express';
 import { InversifyExpressServer } from 'inversify-express-utils';
 
-import { errorHandler } from 'controller/middleware/errorHandler';
-import container from 'di/container';
+import { errorHandler } from './controller/middleware/errorHandler.js';
+import container from './di/container.js';
 
 // Ensure controllers are registered
-import 'controller/UserController';
-import 'controller/HealthController';
+import './controller/UserController.js';
+import './controller/HealthController.js';
 
 const server = new InversifyExpressServer(container);
 

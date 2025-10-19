@@ -1,12 +1,12 @@
 import { PrismaClient } from '@prisma/client';
 import { inject, injectable } from 'inversify';
 
-import { TYPES } from 'di/types';
-import { User } from 'domain/User';
-import { UserQueryRepository } from 'repository/interface/UserQueryRepository';
-import { uuidSchema } from 'validation/zod';
+import { TYPES } from '../di/types.js';
+import { User } from '../domain/User.js';
+import { UserQueryRepository } from './interface/UserQueryRepository.js';
+import { uuidSchema } from '../validation/zod.js';
 
-import prisma from '../prisma';
+import prisma from '../prisma.js';
 
 @injectable()
 export class PostgressUserQueryRepository implements UserQueryRepository<User> {

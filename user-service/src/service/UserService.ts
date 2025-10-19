@@ -1,8 +1,8 @@
 import { inject, injectable } from 'inversify';
 
-import { TYPES } from 'di/types';
-import { User } from 'domain/User';
-import { CreateUserDto, UserCommandRepository } from 'repository/interface/UserCommandRepository';
+import { TYPES } from '../di/types.js';
+import { User } from '../domain/User.js';
+import { CreateUserDto, UserCommandRepository } from '../repository/interface/UserCommandRepository.js';
 
 @injectable()
 export class UserService {

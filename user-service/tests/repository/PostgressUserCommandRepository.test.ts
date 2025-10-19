@@ -1,4 +1,4 @@
-import prisma from '@db/prisma';
+import prisma from '../../src/prisma';
 import { User } from 'domain/User';
 import { PostgressUserCommandRepository } from 'repository/PostgressUserCommandRepository';
 

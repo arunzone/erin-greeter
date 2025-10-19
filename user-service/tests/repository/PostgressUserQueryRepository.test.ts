@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
 
-import prisma from '@db/prisma';
+import prisma from '../../src/prisma';
 import { User } from 'domain/User';
 import { PostgressUserQueryRepository } from 'repository/PostgressUserQueryRepository';
 

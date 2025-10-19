@@ -1,11 +1,11 @@
 import { PrismaClient } from '@prisma/client';
 import { inject, injectable } from 'inversify';
 
-import { TYPES } from 'di/types';
-import { User } from 'domain/User';
-import { UserCommandRepository, CreateUserDto } from 'repository/interface/UserCommandRepository';
+import { TYPES } from '../di/types.js';
+import { User } from '../domain/User.js';
+import { UserCommandRepository, CreateUserDto } from './interface/UserCommandRepository.js';
 
-import prisma from '../prisma';
+import prisma from '../prisma.js';
 
 @injectable()
 export class PostgressUserCommandRepository implements UserCommandRepository<User> {

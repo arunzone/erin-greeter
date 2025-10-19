@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { controller, httpGet, response, request } from 'inversify-express-utils';
 
-import prisma from '../prisma';
+import prisma from '../prisma.js';
 
 @controller('/')
 export class HealthController {

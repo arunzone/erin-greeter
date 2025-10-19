@@ -9,20 +9,20 @@ datasource db {
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model Databasechangelog {
-  id            String   @db.VarChar(255)
-  author        String   @db.VarChar(255)
-  filename      String   @db.VarChar(255)
-  dateexecuted  DateTime @db.Timestamp(6)
+  id            String
+  author        String
+  filename      String
+  dateexecuted  DateTime
   orderexecuted Int
-  exectype      String   @db.VarChar(10)
-  md5sum        String?  @db.VarChar(35)
-  description   String?  @db.VarChar(255)
-  comments      String?  @db.VarChar(255)
-  tag           String?  @db.VarChar(255)
-  liquibase     String?  @db.VarChar(20)
-  contexts      String?  @db.VarChar(255)
-  labels        String?  @db.VarChar(255)
-  deploymentId  String?  @map("deployment_id") @db.VarChar(10)
+  exectype      String
+  md5sum        String?
+  description   String?
+  comments      String?
+  tag           String?
+  liquibase     String?
+  contexts      String?
+  labels        String?
+  deploymentId  String?  @map("deployment_id")
 
   @@map("databasechangelog")
   @@ignore
@@ -31,18 +31,19 @@ model Databasechangelog {
 model Databasechangeloglock {
   id          Int       @id
   locked      Boolean
-  lockgranted DateTime? @db.Timestamp(6)
-  lockedby    String?   @db.VarChar(255)
+  lockgranted DateTime?
+  lockedby    String?
 
   @@map("databasechangeloglock")
+  @@ignore
 }
 
 model User {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id        String   @id @default(dbgenerated("gen_random_uuid()"))
   firstName String   @map("first_name")
   lastName  String?  @map("last_name")
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @map("updated_at")
 
   @@map("user")
 }

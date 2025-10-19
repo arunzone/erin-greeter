@@ -1,5 +1,5 @@
-import { User } from 'domain/User';
-import { CreateUserDto } from 'repository/interface/UserCommandRepository';
+import { User } from '../../domain/User.js';
+import { CreateUserDto } from '../../repository/interface/UserCommandRepository.js';
 
 export type CreateUserRequest = { firstName: string; lastName?: string };
 export type UserResponse = {
