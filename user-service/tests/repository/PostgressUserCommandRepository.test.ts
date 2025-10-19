@@ -11,7 +11,7 @@ describe('User Command Repository - create user', () => {
   });
 
   test('should create and return the persisted user', async () => {
-    const data = { firstName: 'Erin', lastName: 'Example', timeZone: 'Australia/Sydney' } as any;
+    const data = { firstName: 'Erin', lastName: 'Example', timeZone: 'Australia/Sydney', birthday: new Date('2024-01-01') } as any;
 
     const created = await repo.create(data);
 
@@ -22,6 +22,7 @@ describe('User Command Repository - create user', () => {
       'Australia/Sydney',
       created.createdAt,
       created.updatedAt,
+      created.birthday
     );
 
     expect(created).toEqual(expected);

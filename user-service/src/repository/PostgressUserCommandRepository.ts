@@ -24,6 +24,7 @@ export class PostgressUserCommandRepository implements UserCommandRepository<Use
       created.timeZone,
       created.createdAt,
       created.updatedAt,
+      (created as any).birthday ?? undefined,
     );
   }
 

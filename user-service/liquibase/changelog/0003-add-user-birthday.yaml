@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0003-add-user-birthday
+      author: Arun
+      changes:
+        - addColumn:
+            tableName: user
+            columns:
+              - column:
+                  name: birthday
+                  type: date
+                  constraints:
+                    nullable: true

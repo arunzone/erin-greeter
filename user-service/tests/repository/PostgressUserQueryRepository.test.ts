@@ -16,6 +16,7 @@ describe('User Query Repository - find user by id', () => {
         firstName: 'Erin',
         lastName: 'Example',
         timeZone: 'Australia/Sydney',
+        birthday: new Date('2024-01-01'),
       } as any,
     } as any);
 
@@ -28,6 +29,7 @@ describe('User Query Repository - find user by id', () => {
       'Australia/Sydney',
       created.createdAt,
       created.updatedAt,
+      created.birthday ?? undefined,
     );
     expect(found).toEqual(expected);
   });

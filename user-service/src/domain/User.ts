@@ -10,6 +10,7 @@ export class User {
   public timeZone: string;
   public createdAt: Date;
   public updatedAt: Date;
+  public birthday?: Date;
 
   // Centralized domain validation schema
   public static readonly userPropsSchema = z.object({
@@ -19,6 +20,7 @@ export class User {
     timeZone: ianaTimeZoneSchema,
     createdAt: z.date(),
     updatedAt: z.date(),
+    birthday: z.date().optional(),
   });
 
   // Inferred domain type
@@ -31,6 +33,7 @@ export class User {
     timeZone: string,
     createdAt: Date,
     updatedAt: Date,
+    birthday?: Date,
   ) {
     const props = User.userPropsSchema.parse({
       id,
@@ -39,7 +42,8 @@ export class User {
       timeZone,
       createdAt,
       updatedAt,
-    });
+      birthday: birthday ?? undefined,
+    }) as z.infer<typeof User.userPropsSchema>;
 
     this.id = props.id;
     this.firstName = props.firstName;
@@ -47,5 +51,6 @@ export class User {
     this.timeZone = props.timeZone;
     this.createdAt = props.createdAt;
     this.updatedAt = props.updatedAt;
+    this.birthday = props.birthday;
   }
 }

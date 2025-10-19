@@ -39,12 +39,13 @@ model Databasechangeloglock {
 }
 
 model User {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  firstName String   @map("first_name")
-  lastName  String?  @map("last_name")
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
-  timeZone  String   @map("time_zone")
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  firstName String    @map("first_name")
+  lastName  String?   @map("last_name")
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+  timeZone  String    @map("time_zone")
+  birthday  DateTime? @map("birthday") @db.Date
 
   @@map("user")
 }

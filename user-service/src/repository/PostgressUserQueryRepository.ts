@@ -25,6 +25,7 @@ export class PostgressUserQueryRepository implements UserQueryRepository<User> {
       found.timeZone,
       found.createdAt,
       found.updatedAt,
+      found.birthday ?? undefined,
     );
   }
 
