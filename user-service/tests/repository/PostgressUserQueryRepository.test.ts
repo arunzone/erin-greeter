@@ -1,7 +1,7 @@
 import { randomUUID } from 'crypto';
 
 import prisma from '@db/prisma';
-import { PostgressUserQueryRepository } from '@db/repositories/PostgressUserQueryRepository';
+import { PostgressUserQueryRepository } from 'repository/PostgressUserQueryRepository';
 import { User } from 'domain/User';
 
 describe('User Query Repository - find user by id', () => {

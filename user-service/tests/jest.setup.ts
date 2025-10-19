@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import { afterAll, jest } from '@jest/globals';
 import dotenv from 'dotenv';
 
