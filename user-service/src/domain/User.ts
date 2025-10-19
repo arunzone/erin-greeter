@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
-import { uuidSchema } from '../validation/zod.js';
+import { uuidSchema } from 'validation/zod.js';
+import { ianaTimeZoneSchema } from 'validation/IANATimeZone.js';
 
 export class User {
   public id: string;
@@ -10,6 +11,19 @@ export class User {
   public createdAt: Date;
   public updatedAt: Date;
 
+  // Centralized domain validation schema
+  public static readonly userPropsSchema = z.object({
+    id: uuidSchema,
+    firstName: z.string().trim().min(1),
+    lastName: z.string().trim().min(1).optional(),
+    timeZone: ianaTimeZoneSchema,
+    createdAt: z.date(),
+    updatedAt: z.date(),
+  });
+
+  // Inferred domain type
+  public static readonly UserProps = {} as unknown as z.infer<typeof User.userPropsSchema>;
+
   constructor(
     id: string,
     firstName: string,
@@ -18,20 +32,20 @@ export class User {
     createdAt: Date,
     updatedAt: Date,
   ) {
-    const parsedId = uuidSchema.parse(id);
-    const nameSchema = z.string().trim().min(1);
-    const parsedFirst = nameSchema.parse(firstName);
-    const parsedLast =
-      lastName && lastName.trim().length > 0 ? nameSchema.parse(lastName) : undefined;
-    const parsedCreated = z.date().parse(createdAt);
-    const parsedUpdated = z.date().parse(updatedAt);
-    const parsedTimezone = nameSchema.parse(timeZone);
+    const props = User.userPropsSchema.parse({
+      id,
+      firstName,
+      lastName: lastName && lastName.trim().length > 0 ? lastName : undefined,
+      timeZone,
+      createdAt,
+      updatedAt,
+    });
 
-    this.id = parsedId;
-    this.firstName = parsedFirst;
-    this.lastName = parsedLast;
-    this.timeZone = parsedTimezone;
-    this.createdAt = parsedCreated;
-    this.updatedAt = parsedUpdated;
+    this.id = props.id;
+    this.firstName = props.firstName;
+    this.lastName = props.lastName;
+    this.timeZone = props.timeZone;
+    this.createdAt = props.createdAt;
+    this.updatedAt = props.updatedAt;
   }
 }

@@ -27,7 +27,7 @@ const setupApp = (serviceMock: { create: jest.Mock }) => {
   return server.build();
 };
 
-describe('UserController.create', () => {
+describe('User creation', () => {
   const validId = '123e4567-e89b-12d3-a456-426614174000';
 
   const mockUserService = () => {
@@ -38,7 +38,18 @@ describe('UserController.create', () => {
     };
   };
 
-  test('returns 400 with error payload when body is invalid', async () => {
+  test('should return 400 with error payload for empty body', async () => {
+    const service = mockUserService();
+    const app = setupApp(service as any);
+
+    const res = await request(app).post('/users').send({});
+
+    expect(res).toMatchObject({
+      status: 400,
+      body: expect.objectContaining({ message: 'Invalid request' }),
+    });
+  });
+  test('should return 400 with error payload for invalid timezone', async () => {
     const service = mockUserService();
     const app = setupApp(service as any);
 
@@ -50,16 +61,16 @@ describe('UserController.create', () => {
     });
   });
 
-  test('does not call create on validation error', async () => {
+  test('should not call create on validation error', async () => {
     const service = mockUserService();
     const app = setupApp(service as any);
 
-    await request(app).post('/users').send({});
+    await request(app).post('/users').send({ firstName: 'Erin', lastName: 'Example', timeZone: 'Australia/Hawthorn' });
 
     expect(service.create).not.toHaveBeenCalled();
   });
 
-  test('returns 201 with created user on success', async () => {
+  test('should return 201 with created user on success', async () => {
     const service = mockUserService();
     const app = setupApp(service as any);
 
@@ -90,7 +101,7 @@ describe('UserController.create', () => {
     });
   });
 
-  test('returns 500 on service error', async () => {
+  test('should return 500 on service error', async () => {
     const service = mockUserService();
     const app = setupApp(service as any);
 
