@@ -10,26 +10,42 @@ describe('User Command Repository - create user', () => {
   });
 
   test('should create and return the persisted user', async () => {
-    const data = { firstName: 'Erin', lastName: 'Example' };
+    const data = { firstName: 'Erin', lastName: 'Example', timeZone: 'Australia/Sydney' } as any;
 
     const created = await repo.create(data);
 
-    const expected = new User(created.id, 'Erin', 'Example', created.createdAt, created.updatedAt);
+    const expected = new User(
+      created.id,
+      'Erin',
+      'Example',
+      'Australia/Sydney',
+      created.createdAt,
+      created.updatedAt,
+    );
 
     expect(created).toEqual(expected);
   });
 
   test('should create user without lastName and maps it to undefined', async () => {
-    const data = { firstName: 'Erin' };
+    const data = { firstName: 'Erin', timeZone: 'Australia/Sydney' } as any;
 
     const created = await repo.create(data as any);
 
-    const expected = new User(created.id, 'Erin', undefined, created.createdAt, created.updatedAt);
+    const expected = new User(
+      created.id,
+      'Erin',
+      undefined,
+      'Australia/Sydney',
+      created.createdAt,
+      created.updatedAt,
+    );
 
     expect(created).toEqual(expected);
   });
 
   test('should throw when given invalid data that violates domain rules', async () => {
-    await expect(repo.create({ firstName: '', lastName: 'Example' }) as any).rejects.toThrow();
+    await expect(
+      repo.create({ firstName: '', lastName: 'Example', timeZone: 'Australia/Sydney' }) as any,
+    ).rejects.toThrow();
   });
 });

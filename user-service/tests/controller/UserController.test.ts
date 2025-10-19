@@ -67,12 +67,15 @@ describe('UserController.create', () => {
       validId,
       'Erin',
       'Example',
+      'Australia/Sydney',
       new Date('2024-01-01'),
       new Date('2024-01-02'),
     );
     service.create.mockResolvedValueOnce(created);
 
-    const res = await request(app).post('/users').send({ firstName: 'Erin', lastName: 'Example' });
+    const res = await request(app)
+      .post('/users')
+      .send({ firstName: 'Erin', lastName: 'Example', timeZone: 'Australia/Sydney' });
 
     expect(res).toMatchObject({
       status: 201,
@@ -80,6 +83,7 @@ describe('UserController.create', () => {
         id: created.id,
         firstName: created.firstName,
         lastName: created.lastName,
+        timeZone: 'Australia/Sydney',
         createdAt: created.createdAt.toISOString(),
         updatedAt: created.updatedAt.toISOString(),
       },
@@ -92,7 +96,9 @@ describe('UserController.create', () => {
 
     service.create.mockRejectedValueOnce(new Error('boom'));
 
-    const res = await request(app).post('/users').send({ firstName: 'Erin' });
+    const res = await request(app)
+      .post('/users')
+      .send({ firstName: 'Erin', timeZone: 'Australia/Sydney' });
 
     expect(res).toMatchObject({
       status: 500,

@@ -1,3 +1,5 @@
 databaseChangeLog:
   - include:
       file: changelog/0001-init.yaml
+  - include:
+      file: changelog/0002-add-user-timezone.yaml

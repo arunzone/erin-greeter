@@ -15,12 +15,20 @@ describe('User Query Repository - find user by id', () => {
       data: {
         firstName: 'Erin',
         lastName: 'Example',
+        timeZone: 'Australia/Sydney',
       } as any,
     } as any);
 
     const found = await repo.getById(created.id);
 
-    const expected = new User(created.id, 'Erin', 'Example', created.createdAt, created.updatedAt);
+    const expected = new User(
+      created.id,
+      'Erin',
+      'Example',
+      'Australia/Sydney',
+      created.createdAt,
+      created.updatedAt,
+    );
     expect(found).toEqual(expected);
   });
 
@@ -29,12 +37,20 @@ describe('User Query Repository - find user by id', () => {
       data: {
         firstName: 'Ari',
         // omit lastName so it is null in DB
+        timeZone: 'Australia/Sydney',
       } as any,
     } as any);
 
     const found = await repo.getById(created.id);
 
-    const expected = new User(created.id, 'Ari', '', created.createdAt, created.updatedAt);
+    const expected = new User(
+      created.id,
+      'Ari',
+      undefined,
+      'Australia/Sydney',
+      created.createdAt,
+      created.updatedAt,
+    );
     expect(found).toEqual(expected);
   });
 

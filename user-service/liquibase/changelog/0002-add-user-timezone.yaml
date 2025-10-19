@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0002-add-user-timezone
+      author: Arun
+      changes:
+        - addColumn:
+            tableName: user
+            columns:
+              - column:
+                  name: time_zone
+                  type: text
+                  constraints:
+                    nullable: false

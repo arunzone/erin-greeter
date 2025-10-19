@@ -18,11 +18,12 @@ describe('UserService.create', () => {
     const repo = makeRepo();
     const service = new UserService(repo);
 
-    const dto: CreateUserDto = { firstName: 'Erin', lastName: 'Example' };
+    const dto: CreateUserDto = { firstName: 'Erin', lastName: 'Example', timeZone: 'Australia/Sydney' };
     const expected = new User(
       '9122BAFC-45E0-4CCA-94A1-5F33934536FC',
       'Erin',
       'Example',
+      'Australia/Sydney',
       new Date('2024-01-01'),
       new Date('2024-01-02'),
     );
@@ -38,11 +39,12 @@ describe('UserService.create', () => {
     const repo = makeRepo();
     const service = new UserService(repo);
 
-    const dto: CreateUserDto = { firstName: 'Erin', lastName: 'Example' };
+    const dto: CreateUserDto = { firstName: 'Erin', lastName: 'Example', timeZone: 'Australia/Sydney' };
     const expected = new User(
       '9122BAFC-45E0-4CCA-94A1-5F33934536FC',
       'Erin',
       'Example',
+      'Australia/Sydney',
       new Date('2024-01-01'),
       new Date('2024-01-02'),
     );
@@ -58,7 +60,7 @@ describe('UserService.create', () => {
     const repo = makeRepo();
     const service = new UserService(repo);
 
-    const dto: CreateUserDto = { firstName: 'Erin' };
+    const dto: CreateUserDto = { firstName: 'Erin', timeZone: 'Australia/Sydney' } as any;
     const err = new Error('db down');
     repo.create.mockRejectedValueOnce(err);
 

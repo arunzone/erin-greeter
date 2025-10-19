@@ -21,7 +21,8 @@ export class PostgressUserQueryRepository implements UserQueryRepository<User> {
     return new User(
       found.id,
       found.firstName,
-      found.lastName ?? '',
+      found.lastName ?? undefined,
+      found.timeZone,
       found.createdAt,
       found.updatedAt,
     );

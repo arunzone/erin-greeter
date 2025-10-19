@@ -6,6 +6,7 @@ export class User {
   public id: string;
   public firstName: string;
   public lastName?: string;
+  public timeZone: string;
   public createdAt: Date;
   public updatedAt: Date;
 
@@ -13,6 +14,7 @@ export class User {
     id: string,
     firstName: string,
     lastName: string | undefined,
+    timeZone: string,
     createdAt: Date,
     updatedAt: Date,
   ) {
@@ -23,10 +25,12 @@ export class User {
       lastName && lastName.trim().length > 0 ? nameSchema.parse(lastName) : undefined;
     const parsedCreated = z.date().parse(createdAt);
     const parsedUpdated = z.date().parse(updatedAt);
+    const parsedTimezone = nameSchema.parse(timeZone);
 
     this.id = parsedId;
     this.firstName = parsedFirst;
     this.lastName = parsedLast;
+    this.timeZone = parsedTimezone;
     this.createdAt = parsedCreated;
     this.updatedAt = parsedUpdated;
   }
