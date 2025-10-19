@@ -1,6 +1,7 @@
-import prisma from '../prisma';
-import { UserCommandRepository, CreateUserDto } from 'repositories/interface/UserCommandRepository';
 import { User } from 'domain/User';
+import { UserCommandRepository, CreateUserDto } from 'repositories/interface/UserCommandRepository';
+
+import prisma from '../prisma';
 
 export class PostgressUserCommandRepository implements UserCommandRepository<User> {
   constructor(private readonly db = prisma) {}

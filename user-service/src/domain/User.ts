@@ -1,4 +1,5 @@
 import { z } from 'zod';
+
 import { uuidSchema } from '../validation/zod';
 
 export class User {

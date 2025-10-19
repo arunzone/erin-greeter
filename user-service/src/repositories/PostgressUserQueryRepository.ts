@@ -1,7 +1,8 @@
-import prisma from '../prisma';
-import { uuidSchema } from '../validation/zod';
-import { UserQueryRepository } from 'repositories/interface/UserQueryRepository';
 import { User } from 'domain/User';
+import { UserQueryRepository } from 'repositories/interface/UserQueryRepository';
+import { uuidSchema } from 'validation/zod';
+
+import prisma from '../prisma';
 
 export class PostgressUserQueryRepository implements UserQueryRepository<User> {
   constructor(private readonly db = prisma) {}

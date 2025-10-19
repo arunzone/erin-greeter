@@ -19,6 +19,8 @@ This monorepo contains a Node.js Express service (`user-service`)
 npm install --prefix user-service
 # Initialize Husky (creates .husky/_ and ensures hooks work)
 npm run prepare --prefix user-service
+# run lint fix
+npm run lint:fix --prefix user-service
 ```
 
 2. Run tests

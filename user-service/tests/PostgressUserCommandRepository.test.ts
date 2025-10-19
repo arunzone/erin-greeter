@@ -1,5 +1,5 @@
-import { PostgressUserCommandRepository } from '@db/repositories/PostgressUserCommandRepository';
 import prisma from '@db/prisma';
+import { PostgressUserCommandRepository } from '@db/repositories/PostgressUserCommandRepository';
 import { User } from 'domain/User';
 
 describe('User Command Repository - create user', () => {
