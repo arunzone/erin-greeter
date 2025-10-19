@@ -14,20 +14,12 @@ describe('User Command Repository - create user', () => {
 
     const created = await repo.create(data);
 
-    const expected = new User(
-      created.id,
-      'Erin',
-      'Example',
-      created.createdAt,
-      created.updatedAt
-    );
+    const expected = new User(created.id, 'Erin', 'Example', created.createdAt, created.updatedAt);
 
     expect(created).toEqual(expected);
   });
 
   test('throws when given invalid data that violates domain rules', async () => {
-    await expect(
-      repo.create({ firstName: '', lastName: 'Example' }) as any
-    ).rejects.toThrow();
+    await expect(repo.create({ firstName: '', lastName: 'Example' }) as any).rejects.toThrow();
   });
 });

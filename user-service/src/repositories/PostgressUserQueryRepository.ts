@@ -3,8 +3,7 @@ import { uuidSchema } from '../validation/zod';
 import { UserQueryRepository } from 'repositories/interface/UserQueryRepository';
 import { User } from 'domain/User';
 
-
-export class PostgressUserQueryRepository implements UserQueryRepository<User>{
+export class PostgressUserQueryRepository implements UserQueryRepository<User> {
   constructor(private readonly db = prisma) {}
   async getById(id: string): Promise<User | null> {
     this.validateUserId(id);
@@ -18,7 +17,6 @@ export class PostgressUserQueryRepository implements UserQueryRepository<User>{
       found.updatedAt,
     );
   }
-  
 
   private validateUserId(id: string) {
     const parsed = uuidSchema.safeParse(id);

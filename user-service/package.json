@@ -29,23 +29,31 @@
     "liquibase:rollbackCount": "sh -c 'cd .. && if command -v docker-compose >/dev/null 2>&1; then docker-compose -f docker-compose.yml run --rm liquibase --search-path=/liquibase/changelog --changelog-file=changelog-master.yaml --url=jdbc:postgresql://postgres:5432/${POSTGRES_DB:-user_service} --username=${POSTGRES_USER:-app} --password=${POSTGRES_PASSWORD:-app} rollbackCount 1; else docker compose -f docker-compose.yml run --rm liquibase --search-path=/liquibase/changelog --changelog-file=changelog-master.yaml --url=jdbc:postgresql://postgres:5432/${POSTGRES_DB:-user_service} --username=${POSTGRES_USER:-app} --password=${POSTGRES_PASSWORD:-app} rollbackCount 1; fi'"
   },
   "dependencies": {
-    "express": "^4.19.2",
     "@prisma/client": "^5.18.0",
+    "express": "^4.19.2",
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "nodemon": "^3.0.1",
-    "jest": "^29.7.0",
-    "supertest": "^6.3.4",
     "@types/express": "^4.17.21",
     "@types/jest": "^29.5.12",
     "@types/node": "^20.12.7",
     "@types/supertest": "^2.0.16",
+    "@typescript-eslint/eslint-plugin": "^8.46.1",
+    "@typescript-eslint/parser": "^8.46.1",
+    "dotenv": "^16.4.5",
+    "eslint": "^9.38.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
+    "husky": "^9.1.7",
+    "jest": "^29.7.0",
+    "lint-staged": "^16.2.4",
+    "nodemon": "^3.0.1",
+    "prettier": "^3.6.2",
+    "prisma": "^5.18.0",
+    "supertest": "^6.3.4",
     "ts-jest": "^29.1.2",
     "ts-node": "^10.9.2",
-    "typescript": "^5.4.5",
-    "prisma": "^5.18.0",
-    "dotenv": "^16.4.5"
+    "typescript": "^5.4.5"
   },
   "jest": {
     "preset": "ts-jest",
@@ -57,10 +65,14 @@
     "transform": {
       "^.+\\.ts$": [
         "ts-jest",
-        { "tsconfig": "tsconfig.jest.json" }
+        {
+          "tsconfig": "tsconfig.jest.json"
+        }
       ]
     },
-    "setupFilesAfterEnv": ["<rootDir>/tests/jest.setup.ts"],
+    "setupFilesAfterEnv": [
+      "<rootDir>/tests/jest.setup.ts"
+    ],
     "moduleDirectories": [
       "node_modules",
       "src"

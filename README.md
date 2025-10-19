@@ -17,6 +17,8 @@ This monorepo contains a Node.js Express service (`user-service`)
 ```bash
 # user-service deps
 npm install --prefix user-service
+# Initialize Husky (creates .husky/_ and ensures hooks work)
+npm run prepare --prefix user-service
 ```
 
 2. Run tests

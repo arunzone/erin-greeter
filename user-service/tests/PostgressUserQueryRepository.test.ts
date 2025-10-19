@@ -11,21 +11,15 @@ describe('User Query Repository - find user by id', () => {
 
   test('returns the user when a matching UUID exists', async () => {
     const created = await prisma.user.create({
-      data: ({
+      data: {
         firstName: 'Erin',
         lastName: 'Example',
-      } as any),
+      } as any,
     } as any);
 
     const found = await repo.getById(created.id);
 
-    const expected = new User(
-      created.id,
-      'Erin',
-      'Example',
-      created.createdAt,
-      created.updatedAt,
-    );
+    const expected = new User(created.id, 'Erin', 'Example', created.createdAt, created.updatedAt);
     expect(found).toEqual(expected);
   });
 
@@ -33,14 +27,11 @@ describe('User Query Repository - find user by id', () => {
     const missingId = randomUUID();
 
     const found = await repo.getById(missingId);
-    
+
     expect(found).toBeNull();
   });
 
   test('throws on invalid UUID input', async () => {
-    await expect(repo.getById('not-a-uuid'))
-      .rejects
-      .toThrow('Invalid UUID');
+    await expect(repo.getById('not-a-uuid')).rejects.toThrow('Invalid UUID');
   });
 });
-

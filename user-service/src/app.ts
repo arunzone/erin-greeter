@@ -13,7 +13,7 @@ app.get('/health/db', async (req: Request, res: Response) => {
   try {
     const result = await prisma.$queryRawUnsafe('SELECT 1 as ok');
     res.status(200).json({ db: 'ok', result });
-  } catch (err) {
+  } catch (_err) {
     res.status(500).json({ db: 'error' });
   }
 });
