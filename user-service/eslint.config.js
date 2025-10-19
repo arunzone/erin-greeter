@@ -1,17 +1,17 @@
-const js = require('@eslint/js');
-const tsParser = require('@typescript-eslint/parser');
-const tsPlugin = require('@typescript-eslint/eslint-plugin');
-const prettierPlugin = require('eslint-plugin-prettier');
-const globals = require('globals');
-const importPlugin = require('eslint-plugin-import');
-const sonarjsPlugin = require('eslint-plugin-sonarjs');
-const promisePlugin = require('eslint-plugin-promise');
-const securityPlugin = require('eslint-plugin-security');
-const jestPlugin = require('eslint-plugin-jest');
+import { defineConfig } from 'eslint/config';
+import js from '@eslint/js';
+import globals from 'globals';
+import tsParser from '@typescript-eslint/parser';
+import tsPlugin from '@typescript-eslint/eslint-plugin';
+import pluginImport from 'eslint-plugin-import';
+import unicorn from 'eslint-plugin-unicorn';
+import sonarjs from 'eslint-plugin-sonarjs';
+import promise from 'eslint-plugin-promise';
+import security from 'eslint-plugin-security';
+import prettier from 'eslint-plugin-prettier';
+import jestPlugin from 'eslint-plugin-jest';
 
-module.exports = (async () => {
-  const unicorn = (await import('eslint-plugin-unicorn')).default;
-  return [
+export default defineConfig([
   // Ignore build and vendor dirs
   {
     ignores: ['dist/**', 'coverage/**', 'node_modules/**']
@@ -24,7 +24,7 @@ module.exports = (async () => {
       globals: {
         ...globals.node,
         ...globals.es2021,
-        ...globals.builtin
+        ...globals.builtin,
       },
     },
   },
@@ -40,12 +40,12 @@ module.exports = (async () => {
     },
     plugins: {
       '@typescript-eslint': tsPlugin,
-      prettier: prettierPlugin,
-      import: importPlugin,
+      prettier,
+      import: pluginImport,
       unicorn,
-      sonarjs: sonarjsPlugin,
-      promise: promisePlugin,
-      security: securityPlugin,
+      sonarjs,
+      promise,
+      security,
     },
     settings: {
       'import/resolver': {
@@ -89,7 +89,7 @@ module.exports = (async () => {
       'promise/param-names': 'error',
       // Some helpful sonarjs checks
       'sonarjs/no-duplicate-string': 'warn',
-      // Unicorn rules (confirmed available in this version)
+      // Unicorn rules (confirmed from installed version)
       'unicorn/better-regex': 'error',
       'unicorn/filename-case': ['error', {
         cases: {
@@ -124,5 +124,4 @@ module.exports = (async () => {
       'jest/expect-expect': 'warn',
     },
   },
-  ];
-})();
+]);

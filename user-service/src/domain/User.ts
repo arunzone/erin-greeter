@@ -12,7 +12,7 @@ export class User {
   constructor(
     id: string,
     firstName: string,
-    lastName: string | undefined | null,
+    lastName: string | undefined,
     createdAt: Date,
     updatedAt: Date,
   ) {

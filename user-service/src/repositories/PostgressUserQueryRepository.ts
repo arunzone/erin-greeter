@@ -6,10 +6,10 @@ import prisma from '../prisma';
 
 export class PostgressUserQueryRepository implements UserQueryRepository<User> {
   constructor(private readonly db = prisma) {}
-  async getById(id: string): Promise<User | null> {
+  async getById(id: string): Promise<User | undefined> {
     this.validateUserId(id);
     const found = await this.db.user.findUnique({ where: { id } });
-    if (!found) return null;
+    if (!found) return undefined;
     return new User(
       found.id,
       found.firstName,

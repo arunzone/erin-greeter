@@ -12,7 +12,7 @@ export class PostgressUserCommandRepository implements UserCommandRepository<Use
     return new User(
       created.id,
       created.firstName,
-      created.lastName,
+      created.lastName ?? undefined,
       created.createdAt,
       created.updatedAt,
     );
