@@ -19,8 +19,15 @@ export class BadRequestError extends HttpError {
 }
 
 export class NotFoundError extends HttpError {
-  constructor(message = 'Not Found', details?: unknown) {
-    super(message, 404, true, details);
+  constructor(message = 'Resource not found') {
+    super(message, 404);
     Object.setPrototypeOf(this, NotFoundError.prototype);
+  }
+}
+
+export class UnauthorizedError extends HttpError {
+  constructor(message = 'Unauthorized') {
+    super(message, 401);
+    Object.setPrototypeOf(this, UnauthorizedError.prototype);
   }
 }

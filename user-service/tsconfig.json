@@ -14,7 +14,9 @@
     "skipLibCheck": true,
     "types": ["node"],
     "baseUrl": "src",
-    "paths": {}
+    "paths": {
+      "*": ["*"]
+    }
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"]

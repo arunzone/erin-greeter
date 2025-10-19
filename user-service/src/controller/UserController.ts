@@ -9,8 +9,9 @@ import { idParamSchema, userCreateSchema } from 'validation/zod.js';
 
 import { toCreateUserDto, toUserResponse } from 'controller/dto/UserDtos.js';
 import { validateBody, validateParams } from 'controller/middleware/validate.js';
+import { JwtAuthMiddleware } from 'controller/middleware/JwtAuthMiddleware.js';
 
-@controller('/')
+@controller('/', JwtAuthMiddleware)
 export class UserController {
   constructor(@inject(TYPES.UserService) private readonly userService: UserService) {}
 

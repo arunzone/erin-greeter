@@ -7,7 +7,8 @@ import request from 'supertest';
 import { errorHandler } from 'controller/middleware/errorHandler';
 import { TYPES } from 'di/types';
 import { User } from 'domain/User';
-import { CreateUserDto } from 'repository/interface/UserCommandRepository';
+import { JwtAuthMiddleware } from 'controller/middleware/JwtAuthMiddleware';
+import { MockJwtAuthMiddleware } from '../__mocks__/MockJwtAuthMiddleware';
 
 // Ensure controller is registered for inversify-express-utils
 import 'controller/UserController';
@@ -16,6 +17,7 @@ import 'controller/UserController';
 const setupApp = (serviceMock: { delete: jest.Mock }) => {
   const container = new Container({ defaultScope: 'Singleton' });
   container.bind(TYPES.UserService).toConstantValue(serviceMock as any);
+  container.bind<JwtAuthMiddleware>(JwtAuthMiddleware).toConstantValue(new MockJwtAuthMiddleware());
 
   const server = new InversifyExpressServer(container);
   server.setConfig((app) => {

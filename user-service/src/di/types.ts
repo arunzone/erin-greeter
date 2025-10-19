@@ -3,4 +3,5 @@ export const TYPES = {
   UserCommandRepository: Symbol.for('UserCommandRepository'),
   UserQueryRepository: Symbol.for('UserQueryRepository'),
   Prisma: Symbol.for('Prisma'),
+  JwtAuthMiddleware: Symbol.for('JwtAuthMiddleware'),
 };
