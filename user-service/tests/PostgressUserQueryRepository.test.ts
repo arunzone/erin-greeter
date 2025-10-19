@@ -24,12 +24,12 @@ describe('User Query Repository - find user by id', () => {
     expect(found).toEqual(expected);
   });
 
-  test('returns null when no user exists for the UUID', async () => {
+  test('returns undefined when no user exists for the UUID', async () => {
     const missingId = randomUUID();
 
     const found = await repo.getById(missingId);
 
-    expect(found).toBeNull();
+    expect(found).toBeUndefined();
   });
 
   test('throws on invalid UUID input', async () => {
