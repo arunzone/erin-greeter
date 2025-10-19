@@ -1,9 +1,9 @@
 import { PrismaClient } from '@prisma/client';
 import { inject, injectable } from 'inversify';
 
-import { TYPES } from '../di/types.js';
-import { User } from '../domain/User.js';
-import { UserCommandRepository, CreateUserDto } from './interface/UserCommandRepository.js';
+import { TYPES } from 'di/types.js';
+import { User } from 'domain/User.js';
+import { UserCommandRepository, CreateUserDto } from 'repository/interface/UserCommandRepository.js';
 
 import prisma from '../prisma.js';
 
@@ -25,5 +25,10 @@ export class PostgressUserCommandRepository implements UserCommandRepository<Use
       created.createdAt,
       created.updatedAt,
     );
+  }
+
+  async deleteById(id: string): Promise<boolean> {
+    const result = await this.db.user.deleteMany({ where: { id } });
+    return result.count > 0;
   }
 }

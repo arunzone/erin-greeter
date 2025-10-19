@@ -17,3 +17,10 @@ export class BadRequestError extends HttpError {
     Object.setPrototypeOf(this, BadRequestError.prototype);
   }
 }
+
+export class NotFoundError extends HttpError {
+  constructor(message = 'Not Found', details?: unknown) {
+    super(message, 404, true, details);
+    Object.setPrototypeOf(this, NotFoundError.prototype);
+  }
+}

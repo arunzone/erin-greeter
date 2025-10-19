@@ -2,4 +2,5 @@ export type CreateUserDto = { firstName: string; lastName?: string; timeZone: st
 
 export interface UserCommandRepository<T> {
   create(data: CreateUserDto): Promise<T>;
+  deleteById(id: string): Promise<boolean>;
 }

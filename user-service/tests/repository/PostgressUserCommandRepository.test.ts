@@ -1,6 +1,7 @@
 import prisma from '../../src/prisma';
 import { User } from 'domain/User';
 import { PostgressUserCommandRepository } from 'repository/PostgressUserCommandRepository';
+import { randomUUID } from 'crypto';
 
 describe('User Command Repository - create user', () => {
   const repo = new PostgressUserCommandRepository();
@@ -47,5 +48,25 @@ describe('User Command Repository - create user', () => {
     await expect(
       repo.create({ firstName: '', lastName: 'Example', timeZone: 'Australia/Sydney' }) as any,
     ).rejects.toThrow();
+  });
+
+  test('should delete an existing user and return true', async () => {
+    const created = await prisma.user.create({
+      data: { firstName: 'Del', lastName: 'User', timeZone: 'Australia/Sydney' } as any,
+    } as any);
+
+    const result = await repo.deleteById(created.id);
+
+    expect(result).toBe(true);
+    const shouldBeGone = await prisma.user.findUnique({ where: { id: created.id } } as any);
+    expect(shouldBeGone).toBeNull();
+  });
+
+  test('should return false when deleting a non-existent user id', async () => {
+    const missingId = randomUUID();
+
+    const result = await repo.deleteById(missingId);
+
+    expect(result).toBe(false);
   });
 });

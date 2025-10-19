@@ -14,3 +14,15 @@ export const validateBody = (schema: ZodSchema): RequestHandler => {
     next();
   };
 };
+
+export const validateParams = (schema: ZodSchema): RequestHandler => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const parse = schema.safeParse(req.params);
+    if (!parse.success) {
+      const message = parse.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join(', ');
+      throw new BadRequestError('Invalid request', message);
+    }
+    req.params = parse.data as any;
+    next();
+  };
+};

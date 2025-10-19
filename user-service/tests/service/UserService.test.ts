@@ -3,13 +3,16 @@ import { jest } from '@jest/globals';
 import { User } from 'domain/User';
 import { CreateUserDto, UserCommandRepository } from 'repository/interface/UserCommandRepository';
 import UserService from 'service/UserService';
+import { NotFoundError } from 'errors/HttpError';
 
 describe('UserService.create', () => {
   const makeRepo = () => {
     const repo = {
       create: jest.fn(),
+      deleteById: jest.fn(),
     } as unknown as UserCommandRepository<User> & {
       create: jest.MockedFunction<UserCommandRepository<User>['create']>;
+      deleteById: jest.MockedFunction<UserCommandRepository<User>['deleteById']>;
     };
     return repo;
   };
@@ -66,5 +69,28 @@ describe('UserService.create', () => {
 
     await expect(service.create(dto)).rejects.toThrow('db down');
     expect(repo.create).toHaveBeenCalledWith(dto);
+  });
+
+  test('should call deleteById on repository when deleting a user', async () => {
+    const repo = makeRepo();
+    const service = new UserService(repo);
+
+    repo.deleteById.mockResolvedValueOnce(true);
+
+    await service.delete('123e4567-e89b-12d3-a456-426614174000');
+
+    expect(repo.deleteById).toHaveBeenCalledWith('123e4567-e89b-12d3-a456-426614174000');
+  });
+
+  test('should throw NotFoundError when repository returns false', async () => {
+    const repo = makeRepo();
+    const service = new UserService(repo);
+
+    repo.deleteById.mockResolvedValueOnce(false);
+
+    await expect(
+      service.delete('123e4567-e89b-12d3-a456-426614174000'),
+    ).rejects.toBeInstanceOf(NotFoundError);
+    
   });
 });
