@@ -12,7 +12,7 @@ export class IngestStack extends cdk.Stack {
     super(scope, id, props);
 
     // VPC
-    // const vpc = new VpcConstruct(this, 'Vpc').vpc;
+    const vpc = new VpcConstruct(this, 'Vpc').vpc;
 
     // Database
     // const database = new DatabaseConstruct(this, 'Database', { vpc, dbName: 'messages' });
