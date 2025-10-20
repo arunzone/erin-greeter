@@ -11,12 +11,12 @@ describe('Ingest VPC', () => {
     template.resourceCountIs('AWS::EC2::VPC', 1);
   });
 
-  test('should create 2 subnets (public + private in 1 AZ)', () => {
+  test('should create 2 subnets (public + private in 2 AZ)', () => {
     const app = new cdk.App();
     const stack = new IngestStack(app, 'IngestStackSubnets');
     const template = Template.fromStack(stack);
 
-    template.resourceCountIs('AWS::EC2::Subnet', 2);
+    template.resourceCountIs('AWS::EC2::Subnet', 4);
   });
 
   test('should create 1 NAT Gateway (lower cost)', () => {

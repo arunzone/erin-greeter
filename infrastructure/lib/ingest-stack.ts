@@ -15,7 +15,7 @@ export class IngestStack extends cdk.Stack {
     const vpc = new VpcConstruct(this, 'Vpc').vpc;
 
     // Database
-    // const database = new DatabaseConstruct(this, 'Database', { vpc, dbName: 'messages' });
+    const database = new DatabaseConstruct(this, 'Database', { vpc, dbName: 'greet' });
 
     // Queues
     const queues = new QueuesConstruct(this, 'Queues');
