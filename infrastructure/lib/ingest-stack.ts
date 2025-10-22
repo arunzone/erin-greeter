@@ -1,11 +1,8 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import * as path from 'path';
 import { VpcConstruct } from './constructs/VpcConstruct';
 import { DatabaseConstruct } from './constructs/DatabaseConstruct';
 import { QueuesConstruct } from './constructs/QueuesConstruct';
-import { IngestProcessorConstruct } from './constructs/IngestProcessorConstruct';
-import { LiquibaseMigratorConstruct } from './constructs/LiquibaseMigratorConstruct';
 
 export class IngestStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {

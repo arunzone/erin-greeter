@@ -19,3 +19,6 @@ cdk.context.json
 
 # coverage
 user-service/coverage/
+
+# IDE
+.idea/
