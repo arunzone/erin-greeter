@@ -26,7 +26,7 @@ async function getQueueUrl(queueName: string): Promise<string | undefined> {
     const response = await sqsClient.send(command);
     return response.QueueUrl;
   } catch (error) {
-    if (error.name === 'QueueDoesNotExist') {
+    if (error instanceof Error && error.name === 'QueueDoesNotExist') {
       return undefined;
     }
     throw error;
@@ -34,13 +34,14 @@ async function getQueueUrl(queueName: string): Promise<string | undefined> {
 }
 
 describe('IngestStack Integration Tests', () => {
-  test('should have SQS queue created', async () => {
+  test('should have injestion SQS queue created', async () => {
     const response = await sqsClient.send(new ListQueuesCommand({}));
     expect(response.QueueUrls).toBeDefined();
-    // Ensure specific queues exist in LocalStack
     const q1 = await getQueueUrl('ingestion-queue');
-    const q2 = await getQueueUrl('ingestion-dlq');
     expect(q1).toBeDefined();
+  });
+  test('should have dlq queue created', async () => {
+    const q2 = await getQueueUrl('ingestion-dlq');
     expect(q2).toBeDefined();
   });
 });
