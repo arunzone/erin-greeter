@@ -22,3 +22,6 @@ user-service/coverage/
 
 # IDE
 .idea/
+
+infrastructure/localstack-data/
+infrastructure/coverage/
