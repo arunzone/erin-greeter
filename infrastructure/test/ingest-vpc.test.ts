@@ -24,7 +24,7 @@ describe('Ingest VPC', () => {
     const stack = new IngestStack(app, 'IngestStackNat');
     const template = Template.fromStack(stack);
 
-    template.resourceCountIs('AWS::EC2::NatGateway', 1);
+    template.resourceCountIs('AWS::EC2::NatGateway', 0);
   });
 });
 

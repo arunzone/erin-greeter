@@ -3,6 +3,7 @@
     "target": "ES2022",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
+    "isolatedModules": true,
     "lib": [
       "es2022"
     ],
@@ -23,7 +24,9 @@
     "skipLibCheck": true,
     "typeRoots": [
       "./node_modules/@types"
-    ]
+    ],
+    "esModuleInterop": false,
+    "allowSyntheticDefaultImports": false
   },
   "exclude": [
     "node_modules",

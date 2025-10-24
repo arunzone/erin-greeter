@@ -12,7 +12,19 @@ export class VpcConstruct extends Construct {
     super(scope, id);
     this.vpc = new ec2.Vpc(this, 'Vpc', {
       maxAzs: props.maxAzs ?? 2,
-      natGateways: 1,
+      natGateways: 0,
+      subnetConfiguration: [
+        {
+            cidrMask: 24,
+            name: 'Public', // Name is 'Public'
+            subnetType: ec2.SubnetType.PUBLIC,
+        },
+        {
+            cidrMask: 24,
+            name: 'Private', // Name is 'Private'
+            subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS, // Type is PRIVATE_WITH_EGRESS
+        },
+    ],
     });
   }
 }
