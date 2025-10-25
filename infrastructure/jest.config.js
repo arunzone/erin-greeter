@@ -25,21 +25,4 @@ module.exports = {
     }
   },
   coverageReporters: ['text', 'lcov'],
-  // Setup test environment variables
-  testEnvironmentOptions: {
-    env: {
-      // Enable LocalStack for all tests by default
-      RUN_LOCALSTACK: 'true',
-      // Default AWS credentials for LocalStack
-      AWS_ACCESS_KEY_ID: 'test',
-      AWS_SECRET_ACCESS_KEY: 'test',
-      AWS_DEFAULT_REGION: 'us-east-1',
-      // Disable AWS SDK v2 metadata service to prevent timeouts
-      AWS_EC2_METADATA_DISABLED: 'true',
-      // Disable AWS SDK v2 credential provider chain
-      AWS_SDK_LOAD_CONFIG: 'false',
-      // Disable AWS SDK v2 shared config file
-      AWS_SDK_LOAD_CREDENTIALS: 'false',
-    },
-  },
 };

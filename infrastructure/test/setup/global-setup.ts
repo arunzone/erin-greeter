@@ -21,37 +21,31 @@ export default async function globalSetup() {
       }
       // Use a unique CDK output directory per test run to avoid contention
       const outDir = path.join(process.cwd(), `cdk.out-jest-${process.pid}`);
+
+      // Common environment configuration for CDK operations
+      const cdkEnv = {
+        ...process.env,
+        AWS_REGION: 'us-east-1',
+        AWS_ACCESS_KEY_ID: 'test',
+        AWS_SECRET_ACCESS_KEY: 'test',
+        AWS_ENDPOINT_URL: 'http://localhost:4566',
+        AWS_ENDPOINT_URL_S3: 'http://s3.localhost.localstack.cloud:4566',
+        AWS_S3_FORCE_PATH_STYLE: '1',
+        LOCALSTACK_HOSTNAME: 'localhost',
+        CDK_OUTDIR: outDir
+      };
+
       console.log('Bootstrapping CDK into LocalStack...');
       execSync(`NODE_PATH=${process.cwd()}/node_modules npx cdklocal bootstrap --output ${outDir}`, {
         stdio: 'inherit',
         shell: '/bin/bash',
-        env: {
-          ...process.env,
-          AWS_REGION: 'us-east-1',
-          AWS_ACCESS_KEY_ID: 'test',
-          AWS_SECRET_ACCESS_KEY: 'test',
-          AWS_ENDPOINT_URL: 'http://localhost:4566',
-          AWS_ENDPOINT_URL_S3: 'http://s3.localhost.localstack.cloud:4566',
-          AWS_S3_FORCE_PATH_STYLE: '1',
-          LOCALSTACK_HOSTNAME: 'localhost',
-          CDK_OUTDIR: outDir
-        }
+        env: cdkEnv
       });
       console.log('Deploying stack into LocalStack...');
       execSync(`NODE_PATH=${process.cwd()}/node_modules npx cdklocal deploy IngestStack --require-approval never --output ${outDir}`, {
         stdio: 'inherit',
         shell: '/bin/bash',
-        env: {
-          ...process.env,
-          AWS_REGION: 'us-east-1',
-          AWS_ACCESS_KEY_ID: 'test',
-          AWS_SECRET_ACCESS_KEY: 'test',
-          AWS_ENDPOINT_URL: 'http://localhost:4566',
-          AWS_ENDPOINT_URL_S3: 'http://s3.localhost.localstack.cloud:4566',
-          AWS_S3_FORCE_PATH_STYLE: '1',
-          LOCALSTACK_HOSTNAME: 'localhost',
-          CDK_OUTDIR: outDir
-        }
+        env: cdkEnv
       });
     } catch (error) {
       console.error('Error starting LocalStack:', error);

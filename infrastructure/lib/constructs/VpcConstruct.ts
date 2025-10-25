@@ -24,7 +24,7 @@ export class VpcConstruct extends Construct {
             name: 'Private', // Name is 'Private'
             subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS, // Type is PRIVATE_WITH_EGRESS
         },
-    ],
+      ],
     });
   }
 }

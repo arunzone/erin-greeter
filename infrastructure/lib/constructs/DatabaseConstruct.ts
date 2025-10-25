@@ -2,11 +2,13 @@ import { Construct } from 'constructs';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as rds from 'aws-cdk-lib/aws-rds';
 import * as cdk from 'aws-cdk-lib';
+import * as sm from 'aws-cdk-lib/aws-secretsmanager';
 
 export interface DatabaseConstructProps {
   vpc: ec2.IVpc;
   instanceType?: ec2.InstanceType;
-  dbName?: string;
+  databaseName?: string;
+  secret: sm.Secret;
 }
 
 export class DatabaseConstruct extends Construct {
@@ -25,11 +27,14 @@ export class DatabaseConstruct extends Construct {
       storageType: rds.StorageType.STANDARD,
       multiAz: false,
       publiclyAccessible: false,
-      credentials: rds.Credentials.fromGeneratedSecret('postgres'),
-      databaseName: props.dbName ?? 'greet',
+      credentials: rds.Credentials.fromSecret(props.secret),
+      databaseName: props.databaseName ?? 'greet',
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       deletionProtection: false,
     });
+
+    // Add ingress rule for PostgreSQL connections from anywhere (for LocalStack development)
+    this.instance.connections.allowFrom(ec2.Peer.anyIpv4(), ec2.Port.tcp(5432), 'Allow PostgreSQL connections');
 
   }
 }
