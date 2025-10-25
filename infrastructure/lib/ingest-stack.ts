@@ -20,7 +20,7 @@ export class IngestStack extends cdk.Stack {
   public readonly database: rds.DatabaseInstance
   public readonly databaseSecret: sm.Secret
   public readonly vpc: ec2.Vpc
-  public readonly databaseName: string = 'greet'
+  public readonly databaseName: string = 'postgres'
   public readonly queue: sqs.Queue
 
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {

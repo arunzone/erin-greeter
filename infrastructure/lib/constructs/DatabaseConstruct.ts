@@ -28,7 +28,7 @@ export class DatabaseConstruct extends Construct {
       multiAz: false,
       publiclyAccessible: false,
       credentials: rds.Credentials.fromSecret(props.secret),
-      databaseName: props.databaseName ?? 'greet',
+      databaseName: props.databaseName ?? 'postgres',
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       deletionProtection: false,
     });

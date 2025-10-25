@@ -9,6 +9,7 @@ import * as iam from 'aws-cdk-lib/aws-iam'
 import * as logs from 'aws-cdk-lib/aws-logs'
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs'
 import { Duration } from 'aws-cdk-lib'
+import * as path from 'path'
 
 interface StackProps extends cdk.StackProps {
   database: rds.DatabaseInstance
@@ -22,11 +23,19 @@ export class MigrateStack extends cdk.Stack {
     super(scope, id, props)
 
     const { database, databaseName  , databaseSecret, vpc } = props
+    
+    const databaseMigraterPath = path.join(
+      __dirname,
+      '..',
+      'lambda',
+      'database-migrater',
+      'index.ts'
+    );
 
     const onEventHandler = new NodejsFunction(this, 'DatabaseMigrate', {
       vpc,
       runtime: lambda.Runtime.NODEJS_22_X,
-      entry: 'lib/database-migrate-lambda.ts',
+      entry: databaseMigraterPath,
       handler: 'handler',
       environment: {
         DB_HOST: database.dbInstanceEndpointAddress,
@@ -34,9 +43,27 @@ export class MigrateStack extends cdk.Stack {
         DB_USERNAME: databaseSecret.secretValueFromJson('username').unsafeUnwrap(),
         DB_PASSWORD: databaseSecret.secretValueFromJson('password').unsafeUnwrap(),
         DB_NAME: databaseName,
+        SECRET_ARN: databaseSecret.secretArn,
       },
       logGroup: logs.LogGroup.fromLogGroupName(this, 'DatabaseMigrateLogGroup', `/aws/lambda/DatabaseMigrate`),
       timeout: Duration.minutes(2),
+      bundling: {
+        externalModules: ['aws-sdk'],
+        commandHooks: {
+          beforeBundling(inputDir: string, outputDir: string): string[] {
+            return [];
+          },
+          afterBundling(inputDir: string, outputDir: string): string[] {
+            return [
+              `cd ${outputDir}`,
+              'npm install pg pg-hstore sequelize umzug --omit=dev',
+            ];
+          },
+          beforeInstall() {
+            return [];
+          },
+        },
+      },
     })
 
     // Grant the Lambda function permission to access the database secret

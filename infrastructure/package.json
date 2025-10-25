@@ -22,6 +22,7 @@
     "@types/jest": "^29.5.14",
     "@types/node": "^22.7.9",
     "@types/pg": "^8.15.5",
+    "@types/sequelize": "^4.28.20",
     "@types/supertest": "^2.0.12",
     "@types/uuid": "^10.0.0",
     "aws-cdk": "^2.1031.0",
@@ -44,6 +45,9 @@
     "@aws-sdk/client-secrets-manager": "^3.914.0",
     "@aws-sdk/client-sqs": "^3.540.0",
     "liquibase": "^4.28.1",
-    "pg": "^8.16.3"
+    "pg": "^8.16.3",
+    "sequelize": "^6.37.3",
+    "pg-hstore": "^2.3.4",
+    "umzug": "^3.8.0"
   }
 }

@@ -3,7 +3,7 @@ import { Template, Match } from 'aws-cdk-lib/assertions';
 import { IngestStack } from '../lib/ingest-stack';
 
 describe('Database (RDS)', () => {
-  test('should create one PostgreSQL instance for database greet', () => {
+  test('should create one PostgreSQL instance for database postgres', () => {
     const app = new cdk.App();
     const stack = new IngestStack(app, 'IngestStackDb');
     const template = Template.fromStack(stack);
@@ -12,7 +12,7 @@ describe('Database (RDS)', () => {
 
     template.hasResourceProperties('AWS::RDS::DBInstance', {
       Engine: 'postgres',
-      DBName: 'greet',
+      DBName: 'postgres',
       PubliclyAccessible: false,
       DeletionProtection: false,
     });
