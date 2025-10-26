@@ -46,7 +46,9 @@ export const handler: Handler = async (event: EventType) => {
       console.error('Migration failed:', error);
       throw error;
     }
-
+    // console.log('Migration completed successfully', await sql`SELECT * FROM pg_catalog.pg_tables WHERE schemaname = 'public';`.execute(db));
+    // const userTableDetail = await sql`SELECT column_name, data_type, character_maximum_length, is_nullable FROM information_schema.columns WHERE table_name = 'user';`.execute(db);
+    // console.log('User table detail:', userTableDetail);
     const appliedMigrations =
       results?.map(it => ({
         migrationName: it.migrationName,
