@@ -5,9 +5,10 @@ import { InversifyExpressServer } from 'inversify-express-utils';
 import request from 'supertest';
 
 import { errorHandler } from 'controller/middleware/errorHandler';
+import { JwtAuthMiddleware } from 'controller/middleware/JwtAuthMiddleware';
 import { TYPES } from 'di/types';
 import { User } from 'domain/User';
-import { JwtAuthMiddleware } from 'controller/middleware/JwtAuthMiddleware';
+
 import { MockJwtAuthMiddleware } from '../__mocks__/MockJwtAuthMiddleware';
 
 // Ensure controller is registered for inversify-express-utils
@@ -75,8 +76,7 @@ describe('User deletion', () => {
     );
     service.delete.mockResolvedValueOnce();
 
-    const res = await request(app)
-      .delete(`/users/${validId}`);
+    const res = await request(app).delete(`/users/${validId}`);
 
     expect(res).toMatchObject({
       status: 204,
@@ -89,8 +89,7 @@ describe('User deletion', () => {
 
     service.delete.mockRejectedValueOnce(new Error('boom'));
 
-    const res = await request(app)
-      .delete(`/users/${validId}`);
+    const res = await request(app).delete(`/users/${validId}`);
 
     expect(res).toMatchObject({
       status: 500,

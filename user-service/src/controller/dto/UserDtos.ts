@@ -25,5 +25,5 @@ export const toCreateUserDto = (req: CreateUserRequest): CreateUserDto => ({
 });
 
 export const toUserResponse = (user: User): UserResponse => ({
-  ...user
+  ...user,
 });

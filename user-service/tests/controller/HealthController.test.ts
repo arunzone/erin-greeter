@@ -1,7 +1,11 @@
 import request from 'supertest';
 
 import app from 'app';
-jest.mock('../../src/prisma', () => ({ __esModule: true, default: { $queryRawUnsafe: jest.fn() } }));
+
+jest.mock('../../src/prisma', () => ({
+  __esModule: true,
+  default: { $queryRawUnsafe: jest.fn() },
+}));
 import prisma from '../../src/prisma';
 
 describe('Health Check', () => {

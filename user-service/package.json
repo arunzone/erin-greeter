@@ -30,12 +30,14 @@
     "liquibase:rollbackCount": "sh -c 'cd .. && if command -v docker-compose >/dev/null 2>&1; then docker-compose -f docker-compose.yml run --rm liquibase --search-path=/liquibase/changelog --changelog-file=changelog-master.yaml --url=jdbc:postgresql://postgres:5432/${POSTGRES_DB:-user_service} --username=${POSTGRES_USER:-app} --password=${POSTGRES_PASSWORD:-app} rollbackCount 1; else docker compose -f docker-compose.yml run --rm liquibase --search-path=/liquibase/changelog --changelog-file=changelog-master.yaml --url=jdbc:postgresql://postgres:5432/${POSTGRES_DB:-user_service} --username=${POSTGRES_USER:-app} --password=${POSTGRES_PASSWORD:-app} rollbackCount 1; fi'"
   },
   "dependencies": {
+    "@aws-sdk/client-sqs": "^3.665.0",
     "@prisma/client": "^5.18.0",
     "express": "^4.21.2",
     "inversify": "^6.2.2",
     "inversify-express-utils": "^6.5.0",
     "jsonwebtoken": "^9.0.2",
     "reflect-metadata": "^0.2.2",
+    "tslib": "^2.8.1",
     "zod": "^3.23.8"
   },
   "devDependencies": {

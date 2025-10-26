@@ -1,4 +1,5 @@
 import { z } from 'zod';
+
 import { ianaTimeZoneSchema } from 'validation/IANATimeZone.js';
 
 export const uuidSchema = z.string().uuid();

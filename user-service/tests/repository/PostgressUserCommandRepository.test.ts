@@ -1,7 +1,9 @@
-import prisma from '../../src/prisma';
+import { randomUUID } from 'crypto';
+
 import { User } from 'domain/User';
 import { PostgressUserCommandRepository } from 'repository/PostgressUserCommandRepository';
-import { randomUUID } from 'crypto';
+
+import prisma from '../../src/prisma';
 
 describe('User Command Repository - create user', () => {
   const repo = new PostgressUserCommandRepository();
@@ -11,7 +13,12 @@ describe('User Command Repository - create user', () => {
   });
 
   test('should create and return the persisted user', async () => {
-    const data = { firstName: 'Erin', lastName: 'Example', timeZone: 'Australia/Sydney', birthday: new Date('2024-01-01') } as any;
+    const data = {
+      firstName: 'Erin',
+      lastName: 'Example',
+      timeZone: 'Australia/Sydney',
+      birthday: new Date('2024-01-01'),
+    } as any;
 
     const created = await repo.create(data);
 
@@ -22,7 +29,7 @@ describe('User Command Repository - create user', () => {
       'Australia/Sydney',
       created.createdAt,
       created.updatedAt,
-      created.birthday
+      created.birthday,
     );
 
     expect(created).toEqual(expected);

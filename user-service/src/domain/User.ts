@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
-import { uuidSchema } from 'validation/zod.js';
 import { ianaTimeZoneSchema } from 'validation/IANATimeZone.js';
+import { uuidSchema } from 'validation/zod.js';
 
 export class User {
   public id: string;

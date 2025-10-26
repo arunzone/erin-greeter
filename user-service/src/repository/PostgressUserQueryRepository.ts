@@ -3,10 +3,10 @@ import { inject, injectable } from 'inversify';
 
 import { TYPES } from '../di/types.js';
 import { User } from '../domain/User.js';
-import { UserQueryRepository } from './interface/UserQueryRepository.js';
+import prisma from '../prisma.js';
 import { uuidSchema } from '../validation/zod.js';
 
-import prisma from '../prisma.js';
+import { UserQueryRepository } from './interface/UserQueryRepository.js';
 
 @injectable()
 export class PostgressUserQueryRepository implements UserQueryRepository<User> {

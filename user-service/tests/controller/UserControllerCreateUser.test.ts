@@ -5,12 +5,12 @@ import { InversifyExpressServer } from 'inversify-express-utils';
 import request from 'supertest';
 
 import { errorHandler } from 'controller/middleware/errorHandler.js';
+import { JwtAuthMiddleware } from 'controller/middleware/JwtAuthMiddleware.js';
 import { TYPES } from 'di/types.js';
 import { User } from 'domain/User.js';
 import { CreateUserDto } from 'repository/interface/UserCommandRepository.js';
 
 import { MockJwtAuthMiddleware } from '../__mocks__/MockJwtAuthMiddleware.js';
-import { JwtAuthMiddleware } from 'controller/middleware/JwtAuthMiddleware.js';
 // Ensure controller is registered for inversify-express-utils
 import 'controller/UserController.js';
 
@@ -68,7 +68,9 @@ describe('User creation', () => {
     const service = mockUserService();
     const app = setupApp(service as any);
 
-    await request(app).post('/users').send({ firstName: 'Erin', lastName: 'Example', timeZone: 'Australia/Hawthorn' });
+    await request(app)
+      .post('/users')
+      .send({ firstName: 'Erin', lastName: 'Example', timeZone: 'Australia/Hawthorn' });
 
     expect(service.create).not.toHaveBeenCalled();
   });

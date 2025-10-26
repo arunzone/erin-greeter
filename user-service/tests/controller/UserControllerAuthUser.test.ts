@@ -2,13 +2,13 @@ import { jest } from '@jest/globals';
 import express from 'express';
 import { Container } from 'inversify';
 import { InversifyExpressServer } from 'inversify-express-utils';
-import request from 'supertest';
 import jwt from 'jsonwebtoken';
+import request from 'supertest';
 
 import { errorHandler } from 'controller/middleware/errorHandler';
+import { JwtAuthMiddleware } from 'controller/middleware/JwtAuthMiddleware';
 import { TYPES } from 'di/types';
 import { User } from 'domain/User';
-import { JwtAuthMiddleware } from 'controller/middleware/JwtAuthMiddleware';
 
 // Ensure controller is registered for inversify-express-utils
 import 'controller/UserController';
@@ -55,7 +55,9 @@ describe('User auth', () => {
     const service = mockUserService();
     const app = setupApp(service as any);
 
-    const res = await request(app).post('/users').send({firstName: 'Erin', lastName: 'Example', timeZone: 'Australia/Sydney'});
+    const res = await request(app)
+      .post('/users')
+      .send({ firstName: 'Erin', lastName: 'Example', timeZone: 'Australia/Sydney' });
 
     expect(res).toMatchObject({
       status: 401,
@@ -68,12 +70,11 @@ describe('User auth', () => {
     process.env.JWT_SECRET = 'test-secret';
     const app = setupApp(service as any);
 
-    const token = jwt.sign({ sub: 'tester', role: 'user' }, process.env.JWT_SECRET!, { expiresIn: '1h' });
+    const token = jwt.sign({ sub: 'tester', role: 'user' }, process.env.JWT_SECRET!, {
+      expiresIn: '1h',
+    });
 
-    const res = await request(app)
-      .post('/users')
-      .set('Authorization', `Bearer ${token}`)
-      .send({});
+    const res = await request(app).post('/users').set('Authorization', `Bearer ${token}`).send({});
 
     expect(res).toMatchObject({
       status: 400,
@@ -88,7 +89,7 @@ describe('User auth', () => {
     const res = await request(app)
       .post('/users')
       .set('Authorization', 'Bearer some-token')
-      .send({firstName: 'Erin', lastName: 'Example', timeZone: 'Australia/Sydney'});
+      .send({ firstName: 'Erin', lastName: 'Example', timeZone: 'Australia/Sydney' });
 
     expect(res).toMatchObject({
       status: 401,
@@ -116,6 +117,4 @@ describe('User auth', () => {
       }
     }
   });
-
-  
 });

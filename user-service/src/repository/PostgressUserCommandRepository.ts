@@ -3,7 +3,10 @@ import { inject, injectable } from 'inversify';
 
 import { TYPES } from 'di/types.js';
 import { User } from 'domain/User.js';
-import { UserCommandRepository, CreateUserDto } from 'repository/interface/UserCommandRepository.js';
+import {
+  UserCommandRepository,
+  CreateUserDto,
+} from 'repository/interface/UserCommandRepository.js';
 
 import prisma from '../prisma.js';
 
