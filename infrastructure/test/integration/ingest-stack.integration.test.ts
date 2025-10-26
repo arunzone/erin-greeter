@@ -8,15 +8,15 @@ const TEST_CONFIG = {
   TIMEOUT: 300000, // 5 minutes
   AWS_CREDENTIALS: {
     accessKeyId: 'test',
-    secretAccessKey: 'test'
-  }
+    secretAccessKey: 'test',
+  },
 };
 
 // Configure AWS SDK for LocalStack
 const sqsClient = new SQSClient({
   region: TEST_CONFIG.REGION,
   endpoint: TEST_CONFIG.ENDPOINT,
-  credentials: TEST_CONFIG.AWS_CREDENTIALS
+  credentials: TEST_CONFIG.AWS_CREDENTIALS,
 });
 
 // Helper function to get queue URL by name

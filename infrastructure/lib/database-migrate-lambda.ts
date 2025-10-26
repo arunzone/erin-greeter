@@ -4,13 +4,16 @@ interface EventType {
   RequestType: 'Create' | string;
 }
 
-export const handler = async (event: EventType): Promise<any> => {
+interface LambdaResponse {
+  statusCode: number;
+  body: string;
+}
+
+export const handler = async (event: EventType): Promise<LambdaResponse> => {
   const { DB_HOST, DB_PORT, DB_NAME, DB_USERNAME, DB_PASSWORD } = process.env;
   console.log('process.env', process.env);
   console.log('event', event);
-  
 
-  
   if (event.RequestType == 'Create') {
     const port = +(DB_PORT || 5432);
 
@@ -35,9 +38,7 @@ export const handler = async (event: EventType): Promise<any> => {
       `)
       );
     } catch (error) {
-      console.warn(
-        `Error creating db ${DB_NAME}, check if due to db existing, move on anyway`
-      );
+      console.warn(`Error creating db ${DB_NAME}, check if due to db existing, move on anyway`);
       console.warn(error);
     } finally {
       await rootClient.end();
@@ -52,35 +53,35 @@ export const handler = async (event: EventType): Promise<any> => {
     });
 
     try {
-        await appClient.connect();
+      await appClient.connect();
 
-        console.log(
-          await appClient.query(`
+      console.log(
+        await appClient.query(`
           CREATE TABLE users (
             id serial PRIMARY KEY,
             username VARCHAR ( 50 ) UNIQUE NOT NULL,
             password VARCHAR ( 50 ) NOT NULL
           );
           `)
-        );
-    
-        console.log(
-          await appClient.query(`
+      );
+
+      console.log(
+        await appClient.query(`
           INSERT INTO users
             (id, username, password)
           VALUES (1, 'helloworld', 'securepassword');
         `)
-        );
-    
-        const selectResult = await appClient.query(`
+      );
+
+      const selectResult = await appClient.query(`
           SELECT * FROM users;
           `);
-        console.log('SELECT * FROM users result:', selectResult.rows);
+      console.log('SELECT * FROM users result:', selectResult.rows);
     } catch (error) {
-        console.error('Error during application DB setup:', error);
-        throw error;
+      console.error('Error during application DB setup:', error);
+      throw error;
     } finally {
-        await appClient.end();
+      await appClient.end();
     }
   }
 

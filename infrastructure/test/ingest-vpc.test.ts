@@ -27,4 +27,3 @@ describe('Ingest VPC', () => {
     template.resourceCountIs('AWS::EC2::NatGateway', 0);
   });
 });
-

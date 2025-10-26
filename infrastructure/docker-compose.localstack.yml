@@ -3,8 +3,8 @@ services:
     image: localstack/localstack:latest
     container_name: localstack
     ports:
-      - "127.0.0.1:4566:4566"
-      - "127.0.0.1:4510-4559:4510-4559"
+      - '127.0.0.1:4566:4566'
+      - '127.0.0.1:4510-4559:4510-4559'
     environment:
       - SERVICES=aws-auth,sqs,secretsmanager,rds,ec2,iam,cloudformation,sts,ssm,lambda,apigateway,cloudwatchlogs,events
       - DEBUG=1
@@ -23,10 +23,10 @@ services:
       - START_WEB=0
       - SKIP_SSL_CERT_DOWNLOAD=1
     volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock"
-      - "./localstack-data:/var/lib/localstack"
+      - '/var/run/docker.sock:/var/run/docker.sock'
+      - './localstack-data:/var/lib/localstack'
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:4566/_localstack/health']
       interval: 5s
       timeout: 5s
       retries: 20

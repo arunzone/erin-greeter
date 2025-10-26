@@ -5,10 +5,9 @@ import { MigrateStack } from '../lib/migrate-stack';
 
 const app = new cdk.App();
 const ingestStack = new IngestStack(app, 'IngestStack');
-const migrateStack = new MigrateStack(app, 'MigrateStack', {
+new MigrateStack(app, 'MigrateStack', {
   database: ingestStack.database,
   databaseSecret: ingestStack.databaseSecret,
   vpc: ingestStack.vpc,
   databaseName: ingestStack.databaseName,
 });
-  

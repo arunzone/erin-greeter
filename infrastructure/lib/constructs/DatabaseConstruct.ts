@@ -21,7 +21,8 @@ export class DatabaseConstruct extends Construct {
       engine: rds.DatabaseInstanceEngine.postgres({
         version: rds.PostgresEngineVersion.VER_14,
       }),
-      instanceType: props.instanceType ?? ec2.InstanceType.of(ec2.InstanceClass.T3, ec2.InstanceSize.MICRO),
+      instanceType:
+        props.instanceType ?? ec2.InstanceType.of(ec2.InstanceClass.T3, ec2.InstanceSize.MICRO),
       vpc: props.vpc,
       allocatedStorage: 5,
       storageType: rds.StorageType.STANDARD,
@@ -34,7 +35,10 @@ export class DatabaseConstruct extends Construct {
     });
 
     // Add ingress rule for PostgreSQL connections from anywhere (for LocalStack development)
-    this.instance.connections.allowFrom(ec2.Peer.anyIpv4(), ec2.Port.tcp(5432), 'Allow PostgreSQL connections');
-
+    this.instance.connections.allowFrom(
+      ec2.Peer.anyIpv4(),
+      ec2.Port.tcp(5432),
+      'Allow PostgreSQL connections'
+    );
   }
 }

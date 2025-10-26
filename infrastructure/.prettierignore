@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+cdk.out/
+*.tsbuildinfo
+
+# Generated files
+*.js
+*.d.ts
+
+# Logs
+*.log
+
+# LocalStack data
+localstack-data/
+
+# Coverage reports
+coverage/
+
+# Package files
+package-lock.json
+*.tgz

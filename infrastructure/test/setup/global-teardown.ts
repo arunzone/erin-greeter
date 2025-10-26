@@ -46,8 +46,8 @@ export default async function globalTeardown() {
           AWS_ACCESS_KEY_ID: 'test',
           AWS_SECRET_ACCESS_KEY: 'test',
           AWS_ENDPOINT_URL: 'http://localhost:4566',
-          AWS_ENDPOINT_URL_S3: 'http://localhost:4566'
-        }
+          AWS_ENDPOINT_URL_S3: 'http://localhost:4566',
+        },
       });
     } catch (error) {
       console.error('Error destroying stack (continuing):', error);
@@ -56,7 +56,7 @@ export default async function globalTeardown() {
     // Stop LocalStack
     try {
       console.log('Stopping LocalStack...');
-      execSync('docker-compose -f docker-compose.localstack.yml down');
+      execSync('docker-compose -f docker-compose.yml down');
       console.log('LocalStack stopped successfully');
     } catch (error) {
       console.error('Error stopping LocalStack:', error);
