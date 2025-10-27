@@ -3,6 +3,7 @@ import * as path from 'path';
 
 // This file runs once before all tests
 export default async function globalSetup() {
+  process.env.NODE_ENV = 'test';
   try {
     console.log('Starting LocalStack...');
     // Start LocalStack if not already running

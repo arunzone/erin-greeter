@@ -1,5 +1,5 @@
 import * as cdk from 'aws-cdk-lib';
-import { Construct, Node } from 'constructs';
+import { Construct } from 'constructs';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as sm from 'aws-cdk-lib/aws-secretsmanager';
 import * as rds from 'aws-cdk-lib/aws-rds';
@@ -9,6 +9,8 @@ import * as logs from 'aws-cdk-lib/aws-logs';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { Duration } from 'aws-cdk-lib';
 import * as path from 'path';
+import { DatabaseConfigRetriever } from './constructs/database/DatabaseConfigRetriever';
+import { DatabaseConfigProps } from './constructs/database/DatabaseConfigProps';
 
 interface StackProps extends cdk.StackProps {
   database: rds.DatabaseInstance;
@@ -16,43 +18,6 @@ interface StackProps extends cdk.StackProps {
   vpc: ec2.Vpc;
   databaseName: string;
 }
-interface DatabaseConfigProps {
-  databaseHost: string;
-  databasePort: string;
-  databaseUsername: string;
-  databasePassword: string;
-  databaseName: string;
-}
-const databaseConfig = (
-  node: Node,
-  database: rds.DatabaseInstance,
-  databaseSecret: sm.Secret
-): DatabaseConfigProps => {
-  const envType = node.tryGetContext('envType');
-  const isLocal = envType === 'local';
-  console.log('Environment type:', envType);
-  console.log('isLocal:', isLocal);
-
-  if (isLocal) {
-    // Hardcode all values for local testing, assuming a standard setup
-    return {
-      databaseHost: 'postgres',
-      databasePort: '5432',
-      databaseUsername: 'test',
-      databasePassword: 'test',
-      databaseName: 'postgres',
-    };
-  } else {
-    // Use dynamic references for real AWS deployment
-    return {
-      databaseHost: database.dbInstanceEndpointAddress,
-      databasePort: database.dbInstanceEndpointPort,
-      databaseUsername: databaseSecret.secretValueFromJson('username').unsafeUnwrap(),
-      databasePassword: databaseSecret.secretValueFromJson('password').unsafeUnwrap(),
-      databaseName: 'postgres',
-    };
-  }
-};
 
 export class MigrateStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: StackProps) {
@@ -67,7 +32,11 @@ export class MigrateStack extends cdk.Stack {
       'index.ts'
     );
 
-    const databaseConfigProps = databaseConfig(this.node, database, databaseSecret);
+    const databaseConfigProps: DatabaseConfigProps = DatabaseConfigRetriever.getDatabaseConfig(
+      this.node,
+      database,
+      databaseSecret
+    );
     console.log('Database config for local deployment:', databaseConfigProps);
     const onEventHandler = new NodejsFunction(this, 'DatabaseMigrate', {
       vpc,
