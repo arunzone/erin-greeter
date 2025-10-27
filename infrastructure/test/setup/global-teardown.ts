@@ -32,6 +32,11 @@ function cleanupCdkOutputDirectories() {
 
 // This file runs once after all tests
 export default async function globalTeardown() {
+  if (process.env.SKIP_GLOBAL_TEARDOWN === 'true') {
+    console.log('Skipping global teardown.');
+    return;
+  }
+
   try {
     console.log('Tearing down test environment...');
     // Destroy CDK stack in LocalStack

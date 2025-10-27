@@ -5,6 +5,10 @@ import * as path from 'path';
 export default async function globalSetup() {
   process.env.NODE_ENV = 'test';
   try {
+    if (process.env.SKIP_GLOBAL_SETUP === 'true') {
+      console.log('Skipping global setup.');
+      return;
+    }
     console.log('Starting LocalStack...');
     // Start LocalStack if not already running
     try {
