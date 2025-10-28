@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { EventType } from './types';
 export const UserDataSchema = z.object({
   id: z.uuid(),
   firstName: z.string().min(1).max(255),
@@ -10,7 +11,7 @@ export const UserDataSchema = z.object({
 });
 
 export const UserMessageSchema = z.object({
-  eventType: z.enum(['created', 'updated', 'deleted']),
+  eventType: z.enum(EventType),
   user: UserDataSchema,
   timestamp: z.iso.datetime(),
 });

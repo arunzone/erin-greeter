@@ -7,6 +7,7 @@ import {
   BirthdayRecord,
   NewUserBirthday,
   UserBirthday,
+  EventType,
 } from '../../../lambda/user-ingestion-handler/types';
 import { UserBirthdayRepository } from '../../../lambda/user-ingestion-handler/repository/UserBirthdayRepository';
 import { TransactionManager } from '../../../lambda/user-ingestion-handler/persistence/TransactionManager';
@@ -36,7 +37,7 @@ describe('UserService', () => {
   };
 
   const mockUserMessage: UserMessage = {
-    eventType: 'created',
+    eventType: EventType.CREATED,
     user: {
       id: '123e4567-e89b-12d3-a456-426614174000',
       firstName: 'John',
@@ -54,6 +55,7 @@ describe('UserService', () => {
       findAllUsers: jest.fn(),
       findUserById: jest.fn(),
       createUser: jest.fn(),
+      deleteUser: jest.fn(),
     };
     mockUserBirthdayRepository = {
       findAllBirthdays: jest.fn(),
@@ -193,6 +195,54 @@ describe('UserService', () => {
       mockUserRepository.findAllUsers.mockRejectedValue(error);
 
       await expect(userService.printAllUsers()).rejects.toThrow('Failed to fetch users');
+    });
+  });
+
+  describe('delete', () => {
+    it('should delete an existing user', async () => {
+      mockUserRepository.findUserById.mockResolvedValue(mockUser);
+      mockUserRepository.deleteUser.mockResolvedValue({ numDeletedRows: 1n });
+
+      const result = await userService.delete({
+        id: mockUser.id,
+        firstName: mockUser.first_name,
+        lastName: mockUser.last_name || '',
+        timeZone: 'UTC',
+        createdAt: mockUser.created_at.toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+
+      expect(result).toBeUndefined();
+      expect(mockUserRepository.findUserById).toHaveBeenCalledWith(mockUser.id);
+      expect(mockUserRepository.deleteUser).toHaveBeenCalledWith(mockUser.id, expect.anything());
+      expect(mockTransactionManager.runInTransaction).toHaveBeenCalled();
+    });
+
+    it('should safely ignore when non-existing user delete is attempted', async () => {
+      // Arrange
+      mockUserRepository.findUserById.mockResolvedValue(undefined);
+      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+      // Act
+      const result = await userService.delete({
+        id: 'non-existing-id',
+        firstName: 'Non',
+        lastName: 'Existing',
+        timeZone: 'UTC',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+
+      // Assert
+      expect(result).toBeUndefined();
+      expect(mockUserRepository.findUserById).toHaveBeenCalledWith('non-existing-id');
+      expect(mockUserRepository.deleteUser).not.toHaveBeenCalled();
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        'User non-existing-id does not exist, skipping delete'
+      );
+
+      // Cleanup
+      consoleWarnSpy.mockRestore();
     });
   });
 });

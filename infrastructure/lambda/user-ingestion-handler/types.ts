@@ -13,6 +13,7 @@ export interface UserBirthdayTable {
   day: number;
   month: number;
   year: number;
+  sent_year?: number;
   timezone: string;
   created_at: ColumnType<Date, never, never>;
 }
@@ -35,5 +36,11 @@ export type BirthdayRecord = {
   timezone: string;
   month: number;
   day: number;
-  birthYear: number;
+  sent_year?: number;
 }[];
+
+export enum EventType {
+  CREATED = 'created',
+  UPDATED = 'updated',
+  DELETED = 'deleted',
+}

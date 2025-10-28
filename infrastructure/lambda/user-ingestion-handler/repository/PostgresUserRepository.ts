@@ -1,4 +1,4 @@
-import { Kysely } from 'kysely';
+import { DeleteResult, Kysely } from 'kysely';
 import { Database, User, NewUser, KyselyTrx } from '../types';
 
 import { DatabaseConnectionManager } from './DatabaseConnectionManager';
@@ -24,5 +24,9 @@ export class PostgresUserRepository implements UserRepository<User, NewUser> {
 
   async createUser(userData: NewUser, trx: KyselyTrx): Promise<User> {
     return await trx.insertInto('user').values(userData).returningAll().executeTakeFirstOrThrow();
+  }
+
+  async deleteUser(id: string, trx: KyselyTrx): Promise<DeleteResult> {
+    return await trx.deleteFrom('user').where('id', '=', id).executeTakeFirst();
   }
 }

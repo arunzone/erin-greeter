@@ -23,7 +23,38 @@ export class UserService {
     console.log('User data:', JSON.stringify(message.user, null, 2));
 
     const userData = message.user;
-
+    if (message.eventType === 'created') {
+      return await this.create(userData);
+    }
+    if (message.eventType === 'updated') {
+      return await this.update(userData);
+    }
+    if (message.eventType === 'deleted') {
+      return await this.delete(userData);
+    }
+  }
+  async delete(
+    userData: UserData
+  ): Promise<{ user: User; userBirthday?: UserBirthday } | undefined> {
+    const existingUser = await this.userRepository.findUserById(userData.id);
+    if (existingUser) {
+      await this.transactionManager.runInTransaction(async trx => {
+        await this.userRepository.deleteUser(userData.id, trx);
+      });
+      return undefined;
+    } else {
+      console.warn(`User ${userData.id} does not exist, skipping delete`);
+      return undefined;
+    }
+  }
+  async update(
+    userData: UserData
+  ): Promise<{ user: User; userBirthday?: UserBirthday } | undefined> {
+    throw new Error('Method not implemented.');
+  }
+  async create(
+    userData: UserData
+  ): Promise<{ user: User; userBirthday?: UserBirthday } | undefined> {
     // Check if user already exists
     const existingUser = await this.userRepository.findUserById(userData.id);
     if (existingUser) {
@@ -39,7 +70,6 @@ export class UserService {
       name: `${insertedUser.user.first_name} ${insertedUser.user.last_name}`,
       created_at: insertedUser.user.created_at,
     });
-
     return insertedUser;
   }
   private async createUserAndBirthday(

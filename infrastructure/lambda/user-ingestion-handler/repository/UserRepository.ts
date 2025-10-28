@@ -1,5 +1,5 @@
 import { KyselyTrx } from '../types';
-
+import { DeleteResult } from 'kysely';
 export interface UserRepository<TSelect, TInsert> {
   // Read methods use the TSelect (Output) type
   findAllUsers(): Promise<TSelect[]>;
@@ -7,4 +7,5 @@ export interface UserRepository<TSelect, TInsert> {
 
   // Write methods use the TInsert (Input) type, but still return TSelect (the final inserted object)
   createUser(userData: TInsert, trx: KyselyTrx): Promise<TSelect>;
+  deleteUser(id: string, trx: KyselyTrx): Promise<DeleteResult>;
 }
