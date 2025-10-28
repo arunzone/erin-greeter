@@ -1,10 +1,10 @@
 import { Kysely } from 'kysely';
-import { Database, UserTable, User } from '../types';
+import { Database, User, NewUser, KyselyTrx } from '../types';
 
 import { DatabaseConnectionManager } from './DatabaseConnectionManager';
 import { UserRepository } from './UserRepository';
 
-export class PostgresUserRepository implements UserRepository<User> {
+export class PostgresUserRepository implements UserRepository<User, NewUser> {
   constructor(private dbManager: DatabaseConnectionManager) {}
 
   private get db(): Kysely<Database> {
@@ -13,35 +13,16 @@ export class PostgresUserRepository implements UserRepository<User> {
 
   async findAllUsers(): Promise<User[]> {
     await this.dbManager.ensureConnection();
-    return await this.db
-      .selectFrom('user')
-      .selectAll()
-      .execute();
+    return await this.db.selectFrom('user').selectAll().execute();
   }
 
-  async findUserById(id: string): Promise<User | undefined> { 
+  async findUserById(id: string): Promise<User | undefined> {
     await this.dbManager.ensureConnection();
 
-    return await this.db
-      .selectFrom('user')
-      .selectAll()
-      .where('id', '=', id)
-      .executeTakeFirst();
-}
+    return await this.db.selectFrom('user').selectAll().where('id', '=', id).executeTakeFirst();
+  }
 
-  async createUser(userData: {
-    id: string;
-    first_name: string;
-    last_name: string;
-    birthday?: string;
-    timezone: string;
-  }): Promise<User> {
-    await this.dbManager.ensureConnection();
-
-    return await this.db
-      .insertInto('user')
-      .values(userData)
-      .returningAll()
-      .executeTakeFirstOrThrow();
+  async createUser(userData: NewUser, trx: KyselyTrx): Promise<User> {
+    return await trx.insertInto('user').values(userData).returningAll().executeTakeFirstOrThrow();
   }
 }

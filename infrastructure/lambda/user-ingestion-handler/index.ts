@@ -4,6 +4,8 @@ import { UserMessageSchema } from './model';
 import { PostgresUserRepository } from './repository/PostgresUserRepository';
 import { DatabaseConnectionManager } from './repository/DatabaseConnectionManager';
 import { UserService } from './service/UserService';
+import { PostgresUserBirthdayRepository } from './repository/PostgresUserBirthdayRepository';
+import { TransactionManager } from './persistence/TransactionManager';
 
 export const handler: SQSHandler = async (event: SQSEvent): Promise<SQSBatchResponse> => {
   console.log('User ingestion event:', JSON.stringify(event, null, 2));
@@ -11,7 +13,9 @@ export const handler: SQSHandler = async (event: SQSEvent): Promise<SQSBatchResp
 
   const dbManager = new DatabaseConnectionManager();
   const userRepository = new PostgresUserRepository(dbManager);
-  const userService = new UserService(userRepository);
+  const userBirthdayRepository = new PostgresUserBirthdayRepository(dbManager);
+  const transactionManager = new TransactionManager(dbManager.getDatabase());
+  const userService = new UserService(userRepository, userBirthdayRepository, transactionManager);
   const batchItemFailures: SQSBatchResponse['batchItemFailures'] = [];
 
   try {

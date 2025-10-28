@@ -60,9 +60,9 @@ export class UserIngestProcessor extends Construct {
         forceDockerBundling: false,
       },
     });
-    
+
     databaseSecret.grantRead(this.fn);
-    
+
     this.fn.addEventSource(
       new event_sources.SqsEventSource(queue, {
         batchSize: 10,

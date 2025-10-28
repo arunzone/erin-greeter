@@ -6,7 +6,6 @@ import { QueuesConstruct } from './constructs/QueuesConstruct';
 import { SecretConstruct } from './constructs/DatabaseSecret';
 import { UserIngestProcessor } from './constructs/UserIngestProcessor';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
-import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as rds from 'aws-cdk-lib/aws-rds';
 import * as sm from 'aws-cdk-lib/aws-secretsmanager';
 import * as sqs from 'aws-cdk-lib/aws-sqs';
@@ -18,6 +17,7 @@ export class IngestStack extends cdk.Stack {
   public readonly databaseName: string = 'postgres';
   public readonly queue: sqs.Queue;
   public readonly dlq: sqs.Queue;
+  public readonly userIngestProcessor: UserIngestProcessor;
 
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
@@ -38,7 +38,7 @@ export class IngestStack extends cdk.Stack {
     const dlq = queueConstruct.dlq;
 
     // Create simple lambda to consume messages from queue
-    const consumer = new UserIngestProcessor(this, 'SimpleConsumer', {
+    const consumer = new UserIngestProcessor(this, 'UserConsumer', {
       queue: queue,
       vpc: vpc,
       database: database,
@@ -50,5 +50,6 @@ export class IngestStack extends cdk.Stack {
     this.vpc = vpc;
     this.queue = queue;
     this.dlq = dlq;
+    this.userIngestProcessor = consumer;
   }
 }

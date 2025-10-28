@@ -1,13 +1,5 @@
-import * as cdk from 'aws-cdk-lib';
-import {
-  SQSClient,
-  SendMessageCommand,
-  GetQueueAttributesCommand,
-} from '@aws-sdk/client-sqs';
-import {
-  LambdaClient,
-  GetFunctionCommand,
-} from '@aws-sdk/client-lambda';
+import { SQSClient, SendMessageCommand, GetQueueAttributesCommand } from '@aws-sdk/client-sqs';
+import { LambdaClient, GetFunctionCommand } from '@aws-sdk/client-lambda';
 import { Kysely, PostgresDialect } from 'kysely';
 import { Pool, types } from 'pg';
 import { Database } from '../../../lambda/user-ingestion-handler/types';
@@ -20,12 +12,11 @@ const localstackConfig = {
     secretAccessKey: 'test',
   },
 };
-types.setTypeParser(1082, (stringValue) => {
+types.setTypeParser(1082, stringValue => {
   return stringValue; // Return the string '1990-01-15' directly
 });
 
-describe('SimpleQueueConsumer Lambda Integration Test', () => {
-  let app: cdk.App;
+describe('UserIngestionQueueConsumer Lambda Integration Test', () => {
   let sqsClient: SQSClient;
   let lambdaClient: LambdaClient;
   let queueUrl: string;
@@ -63,8 +54,7 @@ describe('SimpleQueueConsumer Lambda Integration Test', () => {
       }),
     });
     await db.deleteFrom('user').execute();
-    console.log('Stack deployed to LocalStack');
-    console.log('Queue URL:', queueUrl);
+    await db.deleteFrom('user_birthday').execute();
   });
 
   afterAll(async () => {
@@ -89,21 +79,13 @@ describe('SimpleQueueConsumer Lambda Integration Test', () => {
       timestamp: new Date().toISOString(),
     };
 
-    // Clean up any existing user data before test
-    await db.deleteFrom('user').where('id', '=', userId).execute();
-
-    console.log('Sending test message:', testUser);
-
-    const sendResult = await sqsClient.send(
+    await sqsClient.send(
       new SendMessageCommand({
         QueueUrl: queueUrl,
         MessageBody: JSON.stringify(testUser),
       })
     );
 
-    console.log('Message sent with ID:', sendResult.MessageId);
-
-    console.log('Waiting for Lambda to process...');
     await new Promise(resolve => setTimeout(resolve, 8000));
 
     const queueAttributes = await sqsClient.send(
@@ -120,14 +102,11 @@ describe('SimpleQueueConsumer Lambda Integration Test', () => {
       queueAttributes.Attributes?.ApproximateNumberOfMessagesNotVisible || '0'
     );
 
-    console.log(`Messages in queue: ${messagesInQueue}, in flight: ${messagesInFlight}`);
-
     expect(messagesInQueue).toBe(0);
     expect(messagesInFlight).toBe(0);
-
   }, 30000);
-  
-  test.only('should process user message from queue and persisted in database', async () => {
+
+  test('should process user message from queue and persist user in database', async () => {
     const userId = 'c48cbe05-7472-4821-a599-f68aa4cbca6f';
     const testUser = {
       eventType: 'created',
@@ -143,16 +122,13 @@ describe('SimpleQueueConsumer Lambda Integration Test', () => {
       timestamp: new Date().toISOString(),
     };
 
-    const sendResult = await sqsClient.send(
+    await sqsClient.send(
       new SendMessageCommand({
         QueueUrl: queueUrl,
         MessageBody: JSON.stringify(testUser),
       })
     );
 
-    console.log('Message sent with ID:', sendResult.MessageId);
-
-    console.log('Waiting for Lambda to process...');
     await new Promise(resolve => setTimeout(resolve, 10000));
 
     const userInDb = await db
@@ -161,28 +137,19 @@ describe('SimpleQueueConsumer Lambda Integration Test', () => {
       .selectAll()
       .executeTakeFirst();
 
-    console.log('User in DB:', userInDb);
     expect(userInDb!.id).toBe(userId);
     expect(userInDb!.first_name).toBe(testUser.user.firstName);
     expect(userInDb!.last_name).toBe(testUser.user.lastName);
-    expect(userInDb!.timezone).toBe(testUser.user.timeZone);
-    expect(userInDb!.birthday).toBe('1990-01-15');
     expect(userInDb!.created_at).toBeDefined();
-
-    console.log('User successfully validated in database:', userInDb);
-
-    // Clean up test data
-    await db.deleteFrom('user').where('id', '=', userId).execute();
   }, 30000);
 
-  it('should verify lambda function exists and is configured', async () => {
+  test('should verify lambda function exists and is configured', async () => {
     const getFunctionCommand = new GetFunctionCommand({
       FunctionName: 'UserIngestionHandler',
     });
 
     const functionData = await lambdaClient.send(getFunctionCommand);
 
-    expect(functionData.Configuration).toBeDefined();
     expect(functionData.Configuration?.FunctionName).toBe('UserIngestionHandler');
     expect(functionData.Configuration?.Runtime).toBe('nodejs22.x');
     expect(functionData.Configuration?.Timeout).toBe(30);
@@ -191,8 +158,18 @@ describe('SimpleQueueConsumer Lambda Integration Test', () => {
   test('should process batch of user messages', async () => {
     const users = [
       { first_name: 'Alice', last_name: 'Smith', birthday: '1985-03-20', timezone: 'UTC' },
-      { first_name: 'Bob', last_name: 'Johnson', birthday: '1992-07-15', timezone: 'America/Los_Angeles' },
-      { first_name: 'Charlie', last_name: 'Williams', birthday: '1988-11-30', timezone: 'Europe/London' },
+      {
+        first_name: 'Bob',
+        last_name: 'Johnson',
+        birthday: '1992-07-15',
+        timezone: 'America/Los_Angeles',
+      },
+      {
+        first_name: 'Charlie',
+        last_name: 'Williams',
+        birthday: '1988-11-30',
+        timezone: 'Europe/London',
+      },
     ];
 
     console.log(`Sending ${users.length} messages...`);
