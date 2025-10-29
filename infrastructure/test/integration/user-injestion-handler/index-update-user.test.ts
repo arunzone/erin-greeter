@@ -54,7 +54,7 @@ describe('UserIngestionQueueConsumer Lambda Integration Updation Test', () => {
 
     const updateMessage = createUpdateUserMessage(userId, 'Tony', 'Robins');
     await sendMessageToQueue(sqsClient, updateMessage);
-    await waitForLambdaProcessing(TEST_TIMEOUTS.MESSAGE_PROCESSING);
+    await waitForLambdaProcessing(sqsClient, TEST_TIMEOUTS.MESSAGE_PROCESSING);
 
     const queueStatus = await getQueueStatus(sqsClient);
 
@@ -71,9 +71,10 @@ describe('UserIngestionQueueConsumer Lambda Integration Updation Test', () => {
 
     const updateMessage = createUpdateUserMessage(userId, 'John', updatedLastName);
     await sendMessageToQueue(sqsClient, updateMessage);
-    await waitForLambdaProcessing();
+    await waitForLambdaProcessing(sqsClient);
 
     const updatedUser = await findUserById(db, userId);
+
 
     expect(updatedUser).toMatchObject({
       id: userId,
@@ -92,7 +93,7 @@ describe('UserIngestionQueueConsumer Lambda Integration Updation Test', () => {
 
     const updateMessage = createUpdateUserMessage(userId, 'Tom', 'Hanks', updatedTimezone);
     await sendMessageToQueue(sqsClient, updateMessage);
-    await waitForLambdaProcessing();
+    await waitForLambdaProcessing(sqsClient);
 
     const updatedBirthday = await findUserBirthdayByUserId(db, userId);
 

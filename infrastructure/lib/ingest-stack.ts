@@ -31,7 +31,6 @@ export class IngestStack extends cdk.Stack {
       databaseName: this.databaseName,
       secret: databaseSecret,
     }).instance;
-    database.connections.allowInternally(ec2.Port.allTraffic());
 
     const queueConstruct = new QueuesConstruct(this, 'Queues');
     const queue = queueConstruct.queue;

@@ -1,34 +1,10 @@
 import { jest } from '@jest/globals';
-import express from 'express';
-import { Container } from 'inversify';
-import { InversifyExpressServer } from 'inversify-express-utils';
 import request from 'supertest';
 
-import { errorHandler } from 'controller/middleware/errorHandler.js';
-import { JwtAuthMiddleware } from 'controller/middleware/JwtAuthMiddleware.js';
-import { TYPES } from 'di/types.js';
 import { User } from 'domain/User.js';
 import { CreateUserDto } from 'repository/interface/UserCommandRepository.js';
 
-import { MockJwtAuthMiddleware } from '../__mocks__/MockJwtAuthMiddleware.js';
-// Ensure controller is registered for inversify-express-utils
-import 'controller/UserController.js';
-
-// Build an express app using inversify-express-utils with a mocked service
-const setupApp = (serviceMock: { create: jest.Mock }) => {
-  const container = new Container({ defaultScope: 'Singleton' });
-  container.bind(TYPES.UserService).toConstantValue(serviceMock as any);
-  container.bind<JwtAuthMiddleware>(JwtAuthMiddleware).toConstantValue(new MockJwtAuthMiddleware());
-
-  const server = new InversifyExpressServer(container);
-  server.setConfig((app) => {
-    app.use(express.json());
-  });
-  server.setErrorConfig((app) => {
-    app.use(errorHandler);
-  });
-  return server.build();
-};
+import { setupApp } from './controller-test-helpers.js';
 
 describe('User creation', () => {
   const validId = '123e4567-e89b-12d3-a456-426614174000';
@@ -43,7 +19,7 @@ describe('User creation', () => {
 
   test('should return 400 with error payload for empty body', async () => {
     const service = mockUserService();
-    const app = setupApp(service as any);
+    const app = setupApp(service);
 
     const res = await request(app).post('/users').send({});
 
@@ -54,9 +30,11 @@ describe('User creation', () => {
   });
   test('should return 400 with error payload for invalid timezone', async () => {
     const service = mockUserService();
-    const app = setupApp(service as any);
+    const app = setupApp(service);
 
-    const res = await request(app).post('/users').send({});
+    const res = await request(app)
+      .post('/users')
+      .send({ firstName: 'Erin', lastName: 'Example', timeZone: 'Australia/Hawthorn' });
 
     expect(res).toMatchObject({
       status: 400,

@@ -59,8 +59,8 @@ export class MigrateStack extends cdk.Stack {
       ),
       timeout: Duration.minutes(2),
       bundling: {
-        externalModules: ['aws-sdk'],
-        nodeModules: ['kysely', 'pg'], // Bundle these dependencies
+        externalModules: [],
+        nodeModules: ['kysely', 'pg'],
         commandHooks: {
           beforeBundling(_inputDir: string, _outputDir: string): string[] {
             return [];

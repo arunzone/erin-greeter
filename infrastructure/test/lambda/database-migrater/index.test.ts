@@ -62,7 +62,7 @@ describe('Lambda Function Invocation', () => {
     }
   });
 
-  it('should migrate database', async () => {
+  test('should migrate database', async () => {
     const payload = JSON.stringify({ key: 'test-value' });
 
     const params: InvokeCommandInput = {

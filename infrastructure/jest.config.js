@@ -18,6 +18,7 @@ module.exports = {
   // Enable test coverage
   collectCoverage: true,
   coverageDirectory: 'coverage',
+  reporters: [['summary', {summaryThreshold: 2}]],
   globals: {
     'ts-jest': {
       tsconfig: 'tsconfig.json',

@@ -11,8 +11,6 @@ export class DatabaseConfigRetriever {
   ): DatabaseConfigProps {
     const envType = node.tryGetContext('envType');
     const isLocal = envType === 'local';
-    console.log('Environment type:', envType);
-    console.log('isLocal:', isLocal);
 
     if (isLocal) {
       // Hardcode all values for local testing, assuming a standard setup

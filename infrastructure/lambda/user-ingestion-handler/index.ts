@@ -27,7 +27,9 @@ export const handler: SQSHandler = async (event: SQSEvent): Promise<SQSBatchResp
         console.log(`Processing message ${record.messageId}`);
 
         const messageBody = JSON.parse(record.body);
+        console.log('messageBody to string:', JSON.stringify(messageBody));
         const validatedMessage = UserMessageSchema.parse(messageBody);
+        console.log('validatedMessage to string:', JSON.stringify(validatedMessage));
         await userService.processUserMessage(validatedMessage);
 
         console.log(`Message ${record.messageId} processed successfully`);

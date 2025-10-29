@@ -55,7 +55,7 @@ describe('UserIngestionQueueConsumer Lambda Integration Deletion Test', () => {
 
     const deleteMessage = createDeleteUserMessage(userId, 'John', 'Doe');
     await sendMessageToQueue(sqsClient, deleteMessage);
-    await waitForLambdaProcessing(TEST_TIMEOUTS.MESSAGE_PROCESSING);
+    await waitForLambdaProcessing(sqsClient, TEST_TIMEOUTS.MESSAGE_PROCESSING);
 
     const queueStatus = await getQueueStatus(sqsClient);
 
@@ -71,7 +71,7 @@ describe('UserIngestionQueueConsumer Lambda Integration Deletion Test', () => {
 
     const deleteMessage = createDeleteUserMessage(userId, 'John', 'Doe');
     await sendMessageToQueue(sqsClient, deleteMessage);
-    await waitForLambdaProcessing();
+    await waitForLambdaProcessing(sqsClient, TEST_TIMEOUTS.MESSAGE_PROCESSING);
 
     const deletedUser = await findUserById(db, userId);
     const deletedBirthday = await findUserBirthdayByUserId(db, userId);

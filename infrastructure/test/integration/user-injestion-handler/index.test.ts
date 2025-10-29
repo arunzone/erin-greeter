@@ -53,7 +53,7 @@ describe('UserIngestionQueueConsumer Lambda Integration Test', () => {
 
     const createMessage = createUserMessage(userId, 'John', 'Doe');
     await sendMessageToQueue(sqsClient, createMessage);
-    await waitForLambdaProcessing(TEST_TIMEOUTS.MESSAGE_PROCESSING);
+    await waitForLambdaProcessing(sqsClient, TEST_TIMEOUTS.MESSAGE_PROCESSING);
 
     const queueStatus = await getQueueStatus(sqsClient);
 
@@ -68,7 +68,7 @@ describe('UserIngestionQueueConsumer Lambda Integration Test', () => {
 
     const createMessage = createUserMessage(userId, firstName, lastName);
     await sendMessageToQueue(sqsClient, createMessage);
-    await waitForLambdaProcessing();
+    await waitForLambdaProcessing(sqsClient);
 
     const createdUser = await findUserById(db, userId);
 
@@ -97,7 +97,7 @@ describe('UserIngestionQueueConsumer Lambda Integration Test', () => {
     const createMessages = createBatchUserMessages(testUsers);
 
     await sendBatchMessagesToQueue(sqsClient, createMessages);
-    await waitForLambdaProcessing(TEST_TIMEOUTS.BATCH_PROCESSING);
+    await waitForLambdaProcessing(sqsClient, TEST_TIMEOUTS.BATCH_PROCESSING);
 
     const queueStatus = await getQueueStatus(sqsClient);
 

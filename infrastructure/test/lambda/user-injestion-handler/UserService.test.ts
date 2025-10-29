@@ -4,9 +4,11 @@ import { UserMessage } from '../../../lambda/user-ingestion-handler/model';
 import {
   User,
   NewUser,
+  UpdateUser,
   BirthdayRecord,
   NewUserBirthday,
   UserBirthday,
+  UpdateUserBirthday,
   EventType,
 } from '../../../lambda/user-ingestion-handler/types';
 import { UserBirthdayRepository } from '../../../lambda/user-ingestion-handler/repository/UserBirthdayRepository';
@@ -14,9 +16,9 @@ import { TransactionManager } from '../../../lambda/user-ingestion-handler/persi
 
 describe('UserService', () => {
   let userService: UserService;
-  let mockUserRepository: jest.Mocked<UserRepository<User, NewUser>>;
+  let mockUserRepository: jest.Mocked<UserRepository<User, NewUser, UpdateUser>>;
   let mockUserBirthdayRepository: jest.Mocked<
-    UserBirthdayRepository<UserBirthday, NewUserBirthday, BirthdayRecord>
+    UserBirthdayRepository<UserBirthday, NewUserBirthday, UpdateUserBirthday, BirthdayRecord>
   >;
   let mockTransactionManager: jest.Mocked<TransactionManager>;
 
@@ -56,6 +58,7 @@ describe('UserService', () => {
       findAllUsers: jest.fn(),
       findUserById: jest.fn(),
       createUser: jest.fn(),
+      updateUser: jest.fn(),
       deleteUser: jest.fn(),
     };
     mockUserBirthdayRepository = {
@@ -63,6 +66,8 @@ describe('UserService', () => {
       createUserBirthday: jest.fn(),
       findUserBirthdayByDayMonthTimezone: jest.fn(),
       deleteUserBirthday: jest.fn(),
+      findUserBirthdayByUserId: jest.fn(),
+      updateUserBirthday: jest.fn(),
     };
     mockTransactionManager = {
       runInTransaction: jest.fn().mockImplementation(async callback => {
@@ -82,7 +87,7 @@ describe('UserService', () => {
   });
 
   describe('processUserMessage', () => {
-    it('should create a new user when user does not exist', async () => {
+    test('should create a new user when user does not exist', async () => {
       mockUserRepository.findUserById.mockResolvedValue(undefined);
       mockUserRepository.createUser.mockResolvedValue(mockUser);
 
@@ -91,7 +96,7 @@ describe('UserService', () => {
       expect(result?.user).toEqual(mockUser);
     });
 
-    it('should return existing user when user already exists', async () => {
+    test('should return existing user when user already exists', async () => {
       mockUserRepository.findUserById.mockResolvedValue(mockUser);
       mockUserRepository.createUser.mockResolvedValue(mockUser);
 
@@ -100,7 +105,7 @@ describe('UserService', () => {
       expect(result?.user).toEqual(mockUser);
     });
 
-    it('should not attempt to persist user when user already exists', async () => {
+    test('should not attempt to persist user when user already exists', async () => {
       mockUserRepository.findUserById.mockResolvedValue(mockUser);
       mockUserRepository.createUser.mockResolvedValue(mockUser);
 
@@ -109,7 +114,7 @@ describe('UserService', () => {
       expect(mockUserRepository.createUser).not.toHaveBeenCalled();
     });
 
-    it('should handle user without birthday', async () => {
+    test('should handle user without birthday', async () => {
       const messageWithoutBirthday: UserMessage = {
         ...mockUserMessage,
         user: {
@@ -126,7 +131,7 @@ describe('UserService', () => {
       expect(result?.user).toEqual(mockUser);
     });
 
-    it('should persist birthday correctly', async () => {
+    test('should persist birthday correctly', async () => {
       mockUserRepository.findUserById.mockResolvedValue(undefined);
       mockUserRepository.createUser.mockResolvedValue(mockUser);
       mockUserBirthdayRepository.createUserBirthday.mockResolvedValue(mockUserBirthday);
@@ -135,7 +140,7 @@ describe('UserService', () => {
 
       expect(result?.userBirthday).toEqual(mockUserBirthday);
     });
-    it('should call create birthday correctly', async () => {
+    test('should call create birthday correctly', async () => {
       mockUserRepository.findUserById.mockResolvedValue(undefined);
       mockUserRepository.createUser.mockResolvedValue(mockUser);
       mockUserBirthdayRepository.createUserBirthday.mockResolvedValue(mockUserBirthday);
@@ -154,7 +159,7 @@ describe('UserService', () => {
       );
     });
 
-    it('should handle repository errors gracefully', async () => {
+    test('should handle repository errors gracefully', async () => {
       const repositoryError = new Error('Database connection failed');
       mockUserRepository.findUserById.mockRejectedValue(repositoryError);
 
@@ -163,7 +168,7 @@ describe('UserService', () => {
       );
     });
 
-    it('should handle create user errors gracefully', async () => {
+    test('should handle create user errors gracefully', async () => {
       mockUserRepository.findUserById.mockResolvedValue(undefined);
       const createError = new Error('Failed to insert user');
       mockUserRepository.createUser.mockRejectedValue(createError);
@@ -175,7 +180,7 @@ describe('UserService', () => {
   });
 
   describe('printAllUsers', () => {
-    it('should return all users from repository', async () => {
+    test('should return all users from repository', async () => {
       const mockUsers: User[] = [mockUser];
       mockUserRepository.findAllUsers.mockResolvedValue(mockUsers);
 
@@ -184,7 +189,7 @@ describe('UserService', () => {
       expect(result).toEqual(mockUsers);
     });
 
-    it('should handle empty user list', async () => {
+    test('should handle empty user list', async () => {
       mockUserRepository.findAllUsers.mockResolvedValue([]);
 
       const result = await userService.printAllUsers();
@@ -192,7 +197,7 @@ describe('UserService', () => {
       expect(mockUserRepository.findAllUsers).toHaveBeenCalledTimes(1);
     });
 
-    it('should handle repository errors in printAllUsers', async () => {
+    test('should handle repository errors in printAllUsers', async () => {
       const error = new Error('Failed to fetch users');
       mockUserRepository.findAllUsers.mockRejectedValue(error);
 
@@ -201,7 +206,7 @@ describe('UserService', () => {
   });
 
   describe('delete', () => {
-    it('should delete an existing user', async () => {
+    test('should delete an existing user', async () => {
       mockUserRepository.findUserById.mockResolvedValue(mockUser);
       mockUserRepository.deleteUser.mockResolvedValue({ numDeletedRows: 1n });
 
@@ -215,17 +220,79 @@ describe('UserService', () => {
       });
 
       expect(result).toBeUndefined();
+    });
+
+    test('should find user by id when deleting', async () => {
+      mockUserRepository.findUserById.mockResolvedValue(mockUser);
+      mockUserRepository.deleteUser.mockResolvedValue({ numDeletedRows: 1n });
+
+      await userService.delete({
+        id: mockUser.id,
+        firstName: mockUser.first_name,
+        lastName: mockUser.last_name || '',
+        timeZone: 'UTC',
+        createdAt: mockUser.created_at.toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+
       expect(mockUserRepository.findUserById).toHaveBeenCalledWith(mockUser.id);
+    });
+
+    test('should call deleteUser when deleting', async () => {
+      mockUserRepository.findUserById.mockResolvedValue(mockUser);
+      mockUserRepository.deleteUser.mockResolvedValue({ numDeletedRows: 1n });
+
+      await userService.delete({
+        id: mockUser.id,
+        firstName: mockUser.first_name,
+        lastName: mockUser.last_name || '',
+        timeZone: 'UTC',
+        createdAt: mockUser.created_at.toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+
       expect(mockUserRepository.deleteUser).toHaveBeenCalledWith(mockUser.id, expect.anything());
+    });
+
+    test('should call deleteUserBirthday when deleting', async () => {
+      mockUserRepository.findUserById.mockResolvedValue(mockUser);
+      mockUserRepository.deleteUser.mockResolvedValue({ numDeletedRows: 1n });
+
+      await userService.delete({
+        id: mockUser.id,
+        firstName: mockUser.first_name,
+        lastName: mockUser.last_name || '',
+        timeZone: 'UTC',
+        createdAt: mockUser.created_at.toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+
+      expect(mockUserBirthdayRepository.deleteUserBirthday).toHaveBeenCalledWith(
+        mockUser.id,
+        expect.anything()
+      );
+    });
+
+    test('should run in a transaction when deleting', async () => {
+      mockUserRepository.findUserById.mockResolvedValue(mockUser);
+      mockUserRepository.deleteUser.mockResolvedValue({ numDeletedRows: 1n });
+
+      await userService.delete({
+        id: mockUser.id,
+        firstName: mockUser.first_name,
+        lastName: mockUser.last_name || '',
+        timeZone: 'UTC',
+        createdAt: mockUser.created_at.toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+
       expect(mockTransactionManager.runInTransaction).toHaveBeenCalled();
     });
 
-    it('should safely ignore when non-existing user delete is attempted', async () => {
-      // Arrange
+    test('should safely ignore when non-existing user delete is attempted', async () => {
       mockUserRepository.findUserById.mockResolvedValue(undefined);
-      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+      jest.spyOn(console, 'warn').mockImplementation(() => {});
 
-      // Act
       const result = await userService.delete({
         id: 'non-existing-id',
         firstName: 'Non',
@@ -235,16 +302,133 @@ describe('UserService', () => {
         updatedAt: new Date().toISOString(),
       });
 
-      // Assert
       expect(result).toBeUndefined();
-      expect(mockUserRepository.findUserById).toHaveBeenCalledWith('non-existing-id');
+    });
+
+    test('should not call deleteUser when user is non-existing', async () => {
+      mockUserRepository.findUserById.mockResolvedValue(undefined);
+      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+      await userService.delete({
+        id: 'non-existing-id',
+        firstName: 'Non',
+        lastName: 'Existing',
+        timeZone: 'UTC',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+
       expect(mockUserRepository.deleteUser).not.toHaveBeenCalled();
+    });
+
+    test('should log a warning when user is non-existing', async () => {
+      mockUserRepository.findUserById.mockResolvedValue(undefined);
+      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+      await userService.delete({
+        id: 'non-existing-id',
+        firstName: 'Non',
+        lastName: 'Existing',
+        timeZone: 'UTC',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+
       expect(consoleWarnSpy).toHaveBeenCalledWith(
         'User non-existing-id does not exist, skipping delete'
       );
-
-      // Cleanup
       consoleWarnSpy.mockRestore();
     });
   });
+
+  describe('update', () => {
+    const updatedUserMessage: UserMessage = {
+      ...mockUserMessage,
+      eventType: EventType.UPDATED,
+      user: {
+        ...mockUserMessage.user,
+        firstName: 'Johnny',
+      },
+    };
+
+    test("should update an existing user's name", async () => {
+      const updatedDbUser = { ...mockUser, first_name: 'Johnny' };
+      mockUserRepository.findUserById.mockResolvedValue(mockUser);
+      mockUserRepository.updateUser.mockResolvedValue(updatedDbUser);
+      mockUserBirthdayRepository.findUserBirthdayByUserId.mockResolvedValue(mockUserBirthday);
+      mockUserBirthdayRepository.updateUserBirthday.mockResolvedValue(mockUserBirthday);
+
+      const result = await userService.update(updatedUserMessage.user);
+
+      expect(result?.user).toEqual(updatedDbUser);
+    });
+
+    test("should update an existing user's birthday", async () => {
+      const updatedUserMessageWithNewBirthday: UserMessage = {
+        ...updatedUserMessage,
+        user: {
+          ...updatedUserMessage.user,
+          birthday: '1990-03-01T00:00:00Z',
+        },
+      };
+      const updatedDbBirthday = { ...mockUserBirthday, day: 3 };
+      mockUserRepository.findUserById.mockResolvedValue(mockUser);
+      mockUserRepository.updateUser.mockResolvedValue(mockUser);
+      mockUserBirthdayRepository.findUserBirthdayByUserId.mockResolvedValue(mockUserBirthday);
+      mockUserBirthdayRepository.updateUserBirthday.mockResolvedValue(updatedDbBirthday);
+
+      const result = await userService.update(updatedUserMessageWithNewBirthday.user);
+
+      expect(result?.userBirthday).toEqual(updatedDbBirthday);
+    });
+
+    test("should create a birthday for a user that doesn't have one", async () => {
+      mockUserRepository.findUserById.mockResolvedValue(mockUser);
+      mockUserRepository.updateUser.mockResolvedValue(mockUser);
+      mockUserBirthdayRepository.findUserBirthdayByUserId.mockResolvedValue(undefined);
+      mockUserBirthdayRepository.createUserBirthday.mockResolvedValue(mockUserBirthday);
+
+      const result = await userService.update(updatedUserMessage.user);
+
+      expect(result?.userBirthday).toEqual(mockUserBirthday);
+    });
+
+    test('should do nothing if the user does not exist', async () => {
+      mockUserRepository.findUserById.mockResolvedValue(undefined);
+      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const result = await userService.update(updatedUserMessage.user);
+
+      expect(result).toBeUndefined();
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        `User ${updatedUserMessage.user.id} does not exist, skipping update`
+      );
+      consoleWarnSpy.mockRestore();
+    });
+  });
+
+  describe('processUserMessage eventType handling', () => {
+    test("should call update when eventType is 'updated'", async () => {
+      const updateMessage: UserMessage = { ...mockUserMessage, eventType: EventType.UPDATED };
+      const spy = jest.spyOn(userService, 'update');
+      mockUserRepository.findUserById.mockResolvedValue(mockUser);
+      mockUserRepository.updateUser.mockResolvedValue(mockUser);
+      mockUserBirthdayRepository.findUserBirthdayByUserId.mockResolvedValue(mockUserBirthday);
+
+      await userService.processUserMessage(updateMessage);
+
+      expect(spy).toHaveBeenCalledWith(updateMessage.user);
+    });
+
+    test("should call delete when eventType is 'deleted'", async () => {
+      const deleteMessage: UserMessage = { ...mockUserMessage, eventType: EventType.DELETED };
+      const spy = jest.spyOn(userService, 'delete');
+      mockUserRepository.findUserById.mockResolvedValue(mockUser);
+
+      await userService.processUserMessage(deleteMessage);
+
+      expect(spy).toHaveBeenCalledWith(deleteMessage.user);
+    });
+  });
+
 });

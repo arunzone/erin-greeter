@@ -11,35 +11,34 @@ import { DatabaseConfigRetriever } from './database/DatabaseConfigRetriever';
 import { DatabaseConfigProps } from './database/DatabaseConfigProps';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 
-export interface UserIngestProcessorProps {
-  queue: sqs.IQueue;
+export interface BirthdayGreeterProcessorProps {
+  greetingQueue: sqs.IQueue;
   vpc: ec2.IVpc;
   database: rds.DatabaseInstance;
   databaseSecret: sm.Secret;
 }
 
-export class UserIngestProcessor extends Construct {
+export class BirthdayGreeterProcessor extends Construct {
   public readonly fn: lambda.Function;
 
-  constructor(scope: Construct, id: string, props: UserIngestProcessorProps) {
+  constructor(scope: Construct, id: string, props: BirthdayGreeterProcessorProps) {
     super(scope, id);
 
-    const { queue, vpc, databaseSecret, database } = props;
+    const { greetingQueue, vpc, databaseSecret, database } = props;
 
-    const lambdaPath = path.join(__dirname, '../../lambda/user-ingestion-handler');
+    const lambdaPath = path.join(__dirname, '../../lambda/birthday-greeter-handler');
     const databaseConfigProps: DatabaseConfigProps = DatabaseConfigRetriever.getDatabaseConfig(
       this.node,
       database,
       databaseSecret
     );
 
-    // Use NodejsFunction for automatic bundling with esbuild
-    this.fn = new NodejsFunction(this, 'UserIngestionHandler', {
+    this.fn = new NodejsFunction(this, 'BirthdayGreeterHandler', {
       vpc,
       runtime: lambda.Runtime.NODEJS_22_X,
       entry: path.join(lambdaPath, 'index.ts'),
       handler: 'handler',
-      functionName: 'UserIngestionHandler',
+      functionName: 'BirthdayGreeterHandler',
       environment: {
         LOG_LEVEL: 'INFO',
         DB_HOST: databaseConfigProps.databaseHost,
@@ -48,14 +47,15 @@ export class UserIngestProcessor extends Construct {
         DB_PASSWORD: databaseConfigProps.databasePassword,
         DB_NAME: databaseConfigProps.databaseName,
         SECRET_ARN: databaseSecret.secretArn,
+        REQUESTBIN_URL: process.env.REQUESTBIN_URL || 'https://webhook.site/unique-id',
       },
-      timeout: cdk.Duration.seconds(30),
+      timeout: cdk.Duration.seconds(60),
       memorySize: 512,
       bundling: {
         minify: false,
         sourceMap: true,
         externalModules: [],
-        nodeModules: ['kysely', 'pg', 'zod'],
+        nodeModules: ['kysely', 'pg', 'axios'],
         forceDockerBundling: false,
       },
     });
@@ -63,10 +63,11 @@ export class UserIngestProcessor extends Construct {
     databaseSecret.grantRead(this.fn);
 
     this.fn.addEventSource(
-      new event_sources.SqsEventSource(queue, {
+      new event_sources.SqsEventSource(greetingQueue, {
         batchSize: 10,
         maxBatchingWindow: cdk.Duration.seconds(5),
         reportBatchItemFailures: true,
+        maxConcurrency: 500,
       })
     );
   }
