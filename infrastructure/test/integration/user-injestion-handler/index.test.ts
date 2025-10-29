@@ -37,30 +37,47 @@ describe('UserIngestionQueueConsumer Lambda Integration Test', () => {
 
     queueUrl = 'http://sqs.us-east-1.localhost:4566/000000000000/ingestion-queue';
 
-    // Setup database connection for testing
+    // Setup database connection for testing - Kysely owns the pool
+    const pool = new Pool({
+      host: 'localhost',
+      port: 5433,
+      user: 'test',
+      password: 'test',
+      database: 'postgres',
+      max: 2,
+      min: 0,
+      idleTimeoutMillis: 10000,
+      connectionTimeoutMillis: 5000,
+    });
+
+    // Handle pool errors
+    pool.on('error', err => {
+      console.error('Unexpected error on idle client', err);
+    });
+
     db = new Kysely<Database>({
-      dialect: new PostgresDialect({
-        pool: new Pool({
-          host: 'localhost',
-          port: 5433,
-          user: 'test',
-          password: 'test',
-          database: 'postgres',
-          max: 2,
-          min: 0,
-          idleTimeoutMillis: 10000,
-          connectionTimeoutMillis: 5000,
-        }),
-      }),
+      dialect: new PostgresDialect({ pool }),
     });
     await db.deleteFrom('user_birthday').execute();
     await db.deleteFrom('user').execute();
   });
 
   afterAll(async () => {
-    sqsClient.destroy();
-    lambdaClient.destroy();
-    await db.destroy();
+    try {
+      // Only destroy Kysely - it will handle closing the pool
+      if (db) {
+        await db.destroy();
+      }
+    } catch (error) {
+      console.error('Error during test teardown:', error);
+    } finally {
+      try {
+        if (sqsClient) sqsClient.destroy();
+        if (lambdaClient) lambdaClient.destroy();
+      } catch (error) {
+        console.error('Error cleaning up AWS clients:', error);
+      }
+    }
   });
 
   test('should process user ingestion message from queue', async () => {
@@ -157,18 +174,44 @@ describe('UserIngestionQueueConsumer Lambda Integration Test', () => {
 
   test('should process batch of user messages', async () => {
     const users = [
-      { first_name: 'Alice', last_name: 'Smith', birthday: '1985-03-20', timezone: 'UTC' },
       {
-        first_name: 'Bob',
-        last_name: 'Johnson',
-        birthday: '1992-07-15',
-        timezone: 'America/Los_Angeles',
+        eventType: 'created',
+        user: {
+          id: '17D86534-A5C1-48D9-B27F-7064701225B5',
+          firstName: 'Alice',
+          lastName: 'Smith',
+          birthday: '1985-03-20T00:00:00.000Z',
+          timeZone: 'UTC',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+        timestamp: new Date().toISOString(),
       },
       {
-        first_name: 'Charlie',
-        last_name: 'Williams',
-        birthday: '1988-11-30',
-        timezone: 'Europe/London',
+        eventType: 'created',
+        user: {
+          id: 'C0D2BF45-6E87-42FA-960A-DA323DFB1123',
+          firstName: 'Bob',
+          lastName: 'Johnson',
+          birthday: '1992-07-15T00:00:00.000Z',
+          timeZone: 'America/Los_Angeles',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+        timestamp: new Date().toISOString(),
+      },
+      {
+        eventType: 'created',
+        user: {
+          id: 'E1AE4C30-14EF-4B2B-825F-B01FE439F423',
+          firstName: 'Charlie',
+          lastName: 'Williams',
+          birthday: '1988-11-30T00:00:00.000Z',
+          timeZone: 'Europe/London',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+        timestamp: new Date().toISOString(),
       },
     ];
 
@@ -199,7 +242,11 @@ describe('UserIngestionQueueConsumer Lambda Integration Test', () => {
     const messagesInQueue = parseInt(
       queueAttributes.Attributes?.ApproximateNumberOfMessages || '0'
     );
+    const messagesInFlight = parseInt(
+      queueAttributes.Attributes?.ApproximateNumberOfMessagesNotVisible || '0'
+    );
 
     expect(messagesInQueue).toBe(0);
+    expect(messagesInFlight).toBe(0);
   }, 40000);
 });

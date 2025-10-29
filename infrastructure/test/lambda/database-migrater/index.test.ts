@@ -1,5 +1,5 @@
 import { LambdaClient, InvokeCommand, InvokeCommandInput, LogType } from '@aws-sdk/client-lambda';
-import { Kysely, sql, PostgresDialect } from 'kysely'
+import { Kysely, sql, PostgresDialect } from 'kysely';
 import { Pool } from 'pg';
 
 const localstackConfig = {
@@ -12,20 +12,29 @@ const localstackConfig = {
 };
 
 const lambdaClient = new LambdaClient(localstackConfig);
-  const db = new Kysely({
-    dialect: new PostgresDialect({
-      pool: new Pool({
-        host: 'localhost',
-        port: 5433,
-        user: 'test',
-        password: 'test',
-        database: 'postgres',
-        max: 2,
-        min: 0,
-        idleTimeoutMillis: 10000,
-      }),
-    }),
-  });
+
+// Setup database connection - Kysely owns the pool
+const pool = new Pool({
+  host: 'localhost',
+  port: 5433,
+  user: 'test',
+  password: 'test',
+  database: 'postgres',
+  max: 2,
+  min: 0,
+  idleTimeoutMillis: 10000,
+});
+
+// Handle pool errors to prevent unhandled error events during shutdown
+pool.on('error', err => {
+  console.error('Unexpected error on idle client', err);
+});
+
+const db = new Kysely({
+  dialect: new PostgresDialect({
+    pool,
+  }),
+});
 
 const emptyDabatase = async () => {
   await sql`ALTER TABLE "user_birthday" drop constraint user_birthday_user_id_fkey;`.execute(db);
@@ -33,13 +42,24 @@ const emptyDabatase = async () => {
   await sql`drop table "user";`.execute(db);
   await sql`drop table kysely_migration;;`.execute(db);
   await sql`drop table kysely_migration_lock;`.execute(db);
-}
+};
 
 describe('Lambda Function Invocation', () => {
   const functionName = 'DatabaseMigrate';
 
   beforeEach(async () => {
     await emptyDabatase();
+  });
+
+  afterAll(async () => {
+    try {
+      // Only destroy Kysely - it will handle closing the pool
+      if (db) {
+        await db.destroy();
+      }
+    } catch (error) {
+      console.error('Error during test teardown:', error);
+    }
   });
 
   it('should migrate database', async () => {

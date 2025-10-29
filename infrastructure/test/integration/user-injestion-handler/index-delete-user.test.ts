@@ -37,30 +37,47 @@ describe('UserIngestionQueueConsumer Lambda Integration Deletion Test', () => {
 
     queueUrl = 'http://sqs.us-east-1.localhost:4566/000000000000/ingestion-queue';
 
-    // Setup database connection for testing
+    // Setup database connection for testing - Kysely owns the pool
+    const pool = new Pool({
+      host: 'localhost',
+      port: 5433,
+      user: 'test',
+      password: 'test',
+      database: 'postgres',
+      max: 2,
+      min: 0,
+      idleTimeoutMillis: 10000,
+      connectionTimeoutMillis: 5000,
+    });
+
+    // Handle pool errors
+    pool.on('error', err => {
+      console.error('Unexpected error on idle client', err);
+    });
+
     db = new Kysely<Database>({
-      dialect: new PostgresDialect({
-        pool: new Pool({
-          host: 'localhost',
-          port: 5433,
-          user: 'test',
-          password: 'test',
-          database: 'postgres',
-          max: 2,
-          min: 0,
-          idleTimeoutMillis: 10000,
-          connectionTimeoutMillis: 5000,
-        }),
-      }),
+      dialect: new PostgresDialect({ pool }),
     });
     await db.deleteFrom('user_birthday').execute();
     await db.deleteFrom('user').execute();
   });
 
   afterAll(async () => {
-    sqsClient.destroy();
-    lambdaClient.destroy();
-    await db.destroy();
+    try {
+      // Only destroy Kysely - it will handle closing the pool
+      if (db) {
+        await db.destroy();
+      }
+    } catch (error) {
+      console.error('Error during test teardown:', error);
+    } finally {
+      try {
+        if (sqsClient) sqsClient.destroy();
+        if (lambdaClient) lambdaClient.destroy();
+      } catch (error) {
+        console.error('Error cleaning up AWS clients:', error);
+      }
+    }
   });
 
   test('should process deletion event message from queue', async () => {
@@ -78,6 +95,28 @@ describe('UserIngestionQueueConsumer Lambda Integration Deletion Test', () => {
       },
       timestamp: new Date().toISOString(),
     };
+    const existingUser = await db
+      .insertInto('user')
+      .values({
+        id: userId,
+        first_name: testUser.user.firstName,
+        last_name: testUser.user.lastName,
+      })
+      .returning('id')
+      .executeTakeFirst();
+    const existingUserBirthday = await db
+      .insertInto('user_birthday')
+      .values({
+        user_id: userId,
+        day: 15,
+        month: 1,
+        year: 1990,
+        timezone: testUser.user.timeZone,
+      })
+      .returning('id')
+      .executeTakeFirst();
+    console.log('existingUser: ', existingUser);
+    console.log('existingUserBirthday: ', existingUserBirthday);
 
     await sqsClient.send(
       new SendMessageCommand({
@@ -121,6 +160,28 @@ describe('UserIngestionQueueConsumer Lambda Integration Deletion Test', () => {
       },
       timestamp: new Date().toISOString(),
     };
+    const existingUser = await db
+      .insertInto('user')
+      .values({
+        id: userId,
+        first_name: testUser.user.firstName,
+        last_name: testUser.user.lastName,
+      })
+      .returning('id')
+      .executeTakeFirst();
+    const existingUserBirthday = await db
+      .insertInto('user_birthday')
+      .values({
+        user_id: userId,
+        day: 15,
+        month: 1,
+        year: 1990,
+        timezone: testUser.user.timeZone,
+      })
+      .returning('id')
+      .executeTakeFirst();
+    console.log('existingUser: ', existingUser);
+    console.log('existingUserBirthday: ', existingUserBirthday);
 
     await sqsClient.send(
       new SendMessageCommand({
