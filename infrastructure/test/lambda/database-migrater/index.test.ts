@@ -1,4 +1,6 @@
 import { LambdaClient, InvokeCommand, InvokeCommandInput, LogType } from '@aws-sdk/client-lambda';
+import { Kysely, sql, PostgresDialect } from 'kysely'
+import { Pool } from 'pg';
 
 const localstackConfig = {
   endpoint: 'http://localhost:4566',
@@ -10,11 +12,37 @@ const localstackConfig = {
 };
 
 const lambdaClient = new LambdaClient(localstackConfig);
+  const db = new Kysely({
+    dialect: new PostgresDialect({
+      pool: new Pool({
+        host: 'localhost',
+        port: 5433,
+        user: 'test',
+        password: 'test',
+        database: 'postgres',
+        max: 2,
+        min: 0,
+        idleTimeoutMillis: 10000,
+      }),
+    }),
+  });
+
+const emptyDabatase = async () => {
+  await sql`ALTER TABLE "user_birthday" drop constraint user_birthday_user_id_fkey;`.execute(db);
+  await sql`drop table "user_birthday";`.execute(db);
+  await sql`drop table "user";`.execute(db);
+  await sql`drop table kysely_migration;;`.execute(db);
+  await sql`drop table kysely_migration_lock;`.execute(db);
+}
 
 describe('Lambda Function Invocation', () => {
   const functionName = 'DatabaseMigrate';
 
-  it('should handle database migration failure correctly', async () => {
+  beforeEach(async () => {
+    await emptyDabatase();
+  });
+
+  it('should migrate database', async () => {
     const payload = JSON.stringify({ key: 'test-value' });
 
     const params: InvokeCommandInput = {

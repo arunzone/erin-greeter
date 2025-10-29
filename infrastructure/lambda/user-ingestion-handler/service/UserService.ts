@@ -39,6 +39,7 @@ export class UserService {
     const existingUser = await this.userRepository.findUserById(userData.id);
     if (existingUser) {
       await this.transactionManager.runInTransaction(async trx => {
+        await this.userBirthdayRepository.deleteUserBirthday(userData.id, trx);
         await this.userRepository.deleteUser(userData.id, trx);
       });
       return undefined;

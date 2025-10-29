@@ -53,8 +53,8 @@ describe('UserIngestionQueueConsumer Lambda Integration Test', () => {
         }),
       }),
     });
-    await db.deleteFrom('user').execute();
     await db.deleteFrom('user_birthday').execute();
+    await db.deleteFrom('user').execute();
   });
 
   afterAll(async () => {

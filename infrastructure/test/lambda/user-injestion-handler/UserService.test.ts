@@ -34,6 +34,7 @@ describe('UserService', () => {
     year: 1990,
     timezone: 'America/New_York',
     created_at: new Date('2023-01-01T00:00:00Z'),
+    sent_year: undefined,
   };
 
   const mockUserMessage: UserMessage = {
@@ -61,6 +62,7 @@ describe('UserService', () => {
       findAllBirthdays: jest.fn(),
       createUserBirthday: jest.fn(),
       findUserBirthdayByDayMonthTimezone: jest.fn(),
+      deleteUserBirthday: jest.fn(),
     };
     mockTransactionManager = {
       runInTransaction: jest.fn().mockImplementation(async callback => {

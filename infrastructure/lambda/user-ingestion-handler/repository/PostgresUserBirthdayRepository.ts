@@ -1,4 +1,4 @@
-import { Kysely } from 'kysely';
+import { DeleteResult, Kysely } from 'kysely';
 import { Database, UserBirthday, NewUserBirthday, BirthdayRecord, KyselyTrx } from '../types';
 
 import { DatabaseConnectionManager } from './DatabaseConnectionManager';
@@ -58,5 +58,9 @@ export class PostgresUserBirthdayRepository
       .values(userBirthdayData)
       .returningAll()
       .executeTakeFirstOrThrow();
+  }
+
+  async deleteUserBirthday(userId: string, trx: KyselyTrx): Promise<DeleteResult> {
+    return await trx.deleteFrom('user_birthday').where('user_id', '=', userId).executeTakeFirst();
   }
 }

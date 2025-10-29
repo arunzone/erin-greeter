@@ -1,6 +1,36 @@
 import { execSync } from 'child_process';
 import * as path from 'path';
+import { LambdaClient, InvokeCommand, InvokeCommandInput, LogType } from '@aws-sdk/client-lambda';
 
+const localstackConfig = {
+  endpoint: 'http://localhost:4566',
+  region: 'us-east-1',
+  credentials: {
+    accessKeyId: 'test',
+    secretAccessKey: 'test',
+  },
+};
+
+const setupDatabse = async () => {
+  console.log("Invoking Migration...")
+  const payload = JSON.stringify({ key: 'test-value' });
+  const lambdaClient = new LambdaClient(localstackConfig);
+  const params: InvokeCommandInput = {
+        FunctionName: 'DatabaseMigrate',
+        Payload: Buffer.from(payload),
+        InvocationType: 'RequestResponse',
+        LogType: LogType.Tail,
+      };
+
+      try {
+        const command = new InvokeCommand(params);
+        const response = await lambdaClient.send(command);
+        console.log('Migration status: ', response.StatusCode)
+      } catch (error) {
+        console.error('Error invoking Lambda:', error);
+        fail(`Test failed due to Lambda invocation error: ${error}`);
+      }
+}
 // This file runs once before all tests
 export default async function globalSetup() {
   process.env.NODE_ENV = 'test';
@@ -58,6 +88,7 @@ export default async function globalSetup() {
           env: cdkEnv,
         }
       );
+      await setupDatabse();
     } catch (error) {
       console.error('Error starting LocalStack:', error);
       process.exit(1);

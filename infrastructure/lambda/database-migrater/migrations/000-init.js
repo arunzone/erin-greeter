@@ -20,7 +20,7 @@ exports.up = async function(db) {
       col.primaryKey().defaultTo(sql`gen_random_uuid()`)
     )
     .addColumn('user_id', 'uuid', (col) =>
-      col.notNull().references('user.id').onDelete('CASCADE')
+      col.notNull().references('user.id')
     )
     .addColumn('day', 'integer', (col) => col.notNull().check(sql`"day" >= 1 and "day" <= 31`))
     .addColumn('month', 'integer', (col) => col.notNull().check(sql`"month" >= 1 and "month" <= 12`))
@@ -30,6 +30,12 @@ exports.up = async function(db) {
     .addColumn('created_at', 'timestamp', (col) =>
       col.defaultTo(sql`now()`).notNull()
     )
+    .execute();
+
+  await db.schema
+    .createIndex('user_birthday_user_id_idx')
+    .on('user_birthday')
+    .column('user_id')
     .execute();
 
   await db.schema
