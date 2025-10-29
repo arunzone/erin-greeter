@@ -4,7 +4,7 @@ import { Kysely, PostgresDialect } from 'kysely';
 import { Pool, types } from 'pg';
 import { Database } from '../../../lambda/user-ingestion-handler/types';
 
-const localstackConfig = {
+const LOCALSTACK_CONFIG = {
   endpoint: 'http://localhost:4566',
   region: 'us-east-1',
   credentials: {
@@ -12,45 +12,114 @@ const localstackConfig = {
     secretAccessKey: 'test',
   },
 };
-types.setTypeParser(1082, stringValue => {
-  return stringValue; // Return the string '1990-01-15' directly
-});
+
+const TEST_TIMEOUTS = {
+  MESSAGE_PROCESSING: 8000,
+  LAMBDA_PROCESSING: 10000,
+  TEST_TIMEOUT: 30000,
+};
+
+const QUEUE_URL = 'http://sqs.us-east-1.localhost:4566/000000000000/ingestion-queue';
+
+const DATABASE_CONFIG = {
+  host: 'localhost',
+  port: 5433,
+  user: 'test',
+  password: 'test',
+  database: 'postgres',
+  max: 2,
+  min: 0,
+  idleTimeoutMillis: 10000,
+  connectionTimeoutMillis: 5000,
+};
+
+types.setTypeParser(1082, stringValue => stringValue);
 
 describe('UserIngestionQueueConsumer Lambda Integration Deletion Test', () => {
   let sqsClient: SQSClient;
   let lambdaClient: LambdaClient;
-  let queueUrl: string;
   let db: Kysely<Database>;
 
+  const createDeleteUserMessage = (userId: string, firstName: string, lastName: string, timeZone = 'America/New_York', birthday = '1990-01-15T00:00:00.000Z') => ({
+    eventType: 'deleted',
+    user: {
+      id: userId,
+      firstName,
+      lastName,
+      timeZone,
+      birthday,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    timestamp: new Date().toISOString(),
+  });
+
+  const insertUser = async (userId: string, firstName: string, lastName: string) => {
+    return await db
+      .insertInto('user')
+      .values({
+        id: userId,
+        first_name: firstName,
+        last_name: lastName,
+      })
+      .returning('id')
+      .executeTakeFirst();
+  };
+
+  const insertUserBirthday = async (userId: string, day: number, month: number, year: number, timezone: string) => {
+    return await db
+      .insertInto('user_birthday')
+      .values({
+        user_id: userId,
+        day,
+        month,
+        year,
+        timezone,
+      })
+      .returning('id')
+      .executeTakeFirst();
+  };
+
+  const sendMessageToQueue = async (message: unknown) => {
+    await sqsClient.send(
+      new SendMessageCommand({
+        QueueUrl: QUEUE_URL,
+        MessageBody: JSON.stringify(message),
+      })
+    );
+  };
+
+  const waitForLambdaProcessing = async (timeout = TEST_TIMEOUTS.LAMBDA_PROCESSING) => {
+    await new Promise(resolve => setTimeout(resolve, timeout));
+  };
+
+  const getQueueStatus = async () => {
+    const queueAttributes = await sqsClient.send(
+      new GetQueueAttributesCommand({
+        QueueUrl: QUEUE_URL,
+        AttributeNames: ['ApproximateNumberOfMessages', 'ApproximateNumberOfMessagesNotVisible'],
+      })
+    );
+
+    return {
+      messagesInQueue: parseInt(queueAttributes.Attributes?.ApproximateNumberOfMessages || '0'),
+      messagesInFlight: parseInt(queueAttributes.Attributes?.ApproximateNumberOfMessagesNotVisible || '0'),
+    };
+  };
+
+  const findUserById = async (userId: string) => {
+    return await db.selectFrom('user').where('id', '=', userId).selectAll().executeTakeFirst();
+  };
+
+  const findUserBirthdayByUserId = async (userId: string) => {
+    return await db.selectFrom('user_birthday').where('user_id', '=', userId).selectAll().executeTakeFirst();
+  };
+
   beforeAll(async () => {
-    sqsClient = new SQSClient({
-      region: localstackConfig.region,
-      endpoint: localstackConfig.endpoint,
-      credentials: localstackConfig.credentials,
-    });
+    sqsClient = new SQSClient(LOCALSTACK_CONFIG);
+    lambdaClient = new LambdaClient(LOCALSTACK_CONFIG);
 
-    lambdaClient = new LambdaClient({
-      region: localstackConfig.region,
-      endpoint: localstackConfig.endpoint,
-      credentials: localstackConfig.credentials,
-    });
-
-    queueUrl = 'http://sqs.us-east-1.localhost:4566/000000000000/ingestion-queue';
-
-    // Setup database connection for testing - Kysely owns the pool
-    const pool = new Pool({
-      host: 'localhost',
-      port: 5433,
-      user: 'test',
-      password: 'test',
-      database: 'postgres',
-      max: 2,
-      min: 0,
-      idleTimeoutMillis: 10000,
-      connectionTimeoutMillis: 5000,
-    });
-
-    // Handle pool errors
+    const pool = new Pool(DATABASE_CONFIG);
     pool.on('error', err => {
       console.error('Unexpected error on idle client', err);
     });
@@ -58,6 +127,7 @@ describe('UserIngestionQueueConsumer Lambda Integration Deletion Test', () => {
     db = new Kysely<Database>({
       dialect: new PostgresDialect({ pool }),
     });
+
     await db.deleteFrom('user_birthday').execute();
     await db.deleteFrom('user').execute();
   });
@@ -82,122 +152,34 @@ describe('UserIngestionQueueConsumer Lambda Integration Deletion Test', () => {
 
   test('should process deletion event message from queue', async () => {
     const userId = '123e4567-e89b-12d3-a456-426614174000';
-    const testUser = {
-      eventType: 'deleted',
-      user: {
-        id: userId,
-        firstName: 'John',
-        lastName: 'Doe',
-        timeZone: 'America/New_York',
-        birthday: '1990-01-15T00:00:00.000Z',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
-      timestamp: new Date().toISOString(),
-    };
-    const existingUser = await db
-      .insertInto('user')
-      .values({
-        id: userId,
-        first_name: testUser.user.firstName,
-        last_name: testUser.user.lastName,
-      })
-      .returning('id')
-      .executeTakeFirst();
-    const existingUserBirthday = await db
-      .insertInto('user_birthday')
-      .values({
-        user_id: userId,
-        day: 15,
-        month: 1,
-        year: 1990,
-        timezone: testUser.user.timeZone,
-      })
-      .returning('id')
-      .executeTakeFirst();
-    console.log('existingUser: ', existingUser);
-    console.log('existingUserBirthday: ', existingUserBirthday);
 
-    await sqsClient.send(
-      new SendMessageCommand({
-        QueueUrl: queueUrl,
-        MessageBody: JSON.stringify(testUser),
-      })
-    );
+    await insertUser(userId, 'John', 'Doe');
+    await insertUserBirthday(userId, 15, 1, 1990, 'America/New_York');
 
-    await new Promise(resolve => setTimeout(resolve, 8000));
+    const deleteMessage = createDeleteUserMessage(userId, 'John', 'Doe');
+    await sendMessageToQueue(deleteMessage);
+    await waitForLambdaProcessing(TEST_TIMEOUTS.MESSAGE_PROCESSING);
 
-    const queueAttributes = await sqsClient.send(
-      new GetQueueAttributesCommand({
-        QueueUrl: queueUrl,
-        AttributeNames: ['ApproximateNumberOfMessages', 'ApproximateNumberOfMessagesNotVisible'],
-      })
-    );
+    const queueStatus = await getQueueStatus();
 
-    const messagesInQueue = parseInt(
-      queueAttributes.Attributes?.ApproximateNumberOfMessages || '0'
-    );
-    const messagesInFlight = parseInt(
-      queueAttributes.Attributes?.ApproximateNumberOfMessagesNotVisible || '0'
-    );
-
-    expect(messagesInQueue).toBe(0);
-    expect(messagesInFlight).toBe(0);
-  }, 30000);
+    expect(queueStatus.messagesInQueue).toBe(0);
+    expect(queueStatus.messagesInFlight).toBe(0);
+  }, TEST_TIMEOUTS.TEST_TIMEOUT);
 
   test('should delete user for deletion event message from queue', async () => {
     const userId = 'c48cbe05-7472-4821-a599-f68aa4cbca6f';
-    const testUser = {
-      eventType: 'deleted',
-      user: {
-        id: userId,
-        firstName: 'John',
-        lastName: 'Doe',
-        timeZone: 'America/New_York',
-        birthday: '1990-01-15T00:00:00.000Z',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
-      timestamp: new Date().toISOString(),
-    };
-    const existingUser = await db
-      .insertInto('user')
-      .values({
-        id: userId,
-        first_name: testUser.user.firstName,
-        last_name: testUser.user.lastName,
-      })
-      .returning('id')
-      .executeTakeFirst();
-    const existingUserBirthday = await db
-      .insertInto('user_birthday')
-      .values({
-        user_id: userId,
-        day: 15,
-        month: 1,
-        year: 1990,
-        timezone: testUser.user.timeZone,
-      })
-      .returning('id')
-      .executeTakeFirst();
-    console.log('existingUser: ', existingUser);
-    console.log('existingUserBirthday: ', existingUserBirthday);
 
-    await sqsClient.send(
-      new SendMessageCommand({
-        QueueUrl: queueUrl,
-        MessageBody: JSON.stringify(testUser),
-      })
-    );
+    await insertUser(userId, 'John', 'Doe');
+    await insertUserBirthday(userId, 15, 1, 1990, 'America/New_York');
 
-    await new Promise(resolve => setTimeout(resolve, 10000));
+    const deleteMessage = createDeleteUserMessage(userId, 'John', 'Doe');
+    await sendMessageToQueue(deleteMessage);
+    await waitForLambdaProcessing();
 
-    const userInDb = await db
-      .selectFrom('user')
-      .where('id', '=', userId)
-      .selectAll()
-      .executeTakeFirst();
+    const deletedUser = await findUserById(userId);
+    const deletedBirthday = await findUserBirthdayByUserId(userId);
 
-    expect(userInDb).toBeUndefined();
-  }, 30000);
+    expect(deletedUser).toBeUndefined();
+    expect(deletedBirthday).toBeUndefined();
+  }, TEST_TIMEOUTS.TEST_TIMEOUT);
 });
