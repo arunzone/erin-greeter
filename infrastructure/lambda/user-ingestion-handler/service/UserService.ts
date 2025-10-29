@@ -1,16 +1,25 @@
 import * as moment from 'moment';
 import { UserMessage, UserData } from '../model';
-import { User, NewUser, NewUserBirthday, UserBirthday, BirthdayRecord } from '../types';
+import {
+  User,
+  NewUser,
+  UpdateUser,
+  NewUserBirthday,
+  UpdateUserBirthday,
+  UserBirthday,
+  BirthdayRecord,
+} from '../types';
 import { UserRepository } from '../repository/UserRepository';
 import { TransactionManager } from '../persistence/TransactionManager';
 import { UserBirthdayRepository } from '../repository/UserBirthdayRepository';
 
 export class UserService {
   constructor(
-    private userRepository: UserRepository<User, NewUser>,
+    private userRepository: UserRepository<User, NewUser, UpdateUser>,
     private userBirthdayRepository: UserBirthdayRepository<
       UserBirthday,
       NewUserBirthday,
+      UpdateUserBirthday,
       BirthdayRecord
     >,
     private transactionManager: TransactionManager
@@ -51,12 +60,34 @@ export class UserService {
   async update(
     userData: UserData
   ): Promise<{ user: User; userBirthday?: UserBirthday } | undefined> {
-    throw new Error('Method not implemented.');
+    const existingUser = await this.userRepository.findUserById(userData.id);
+    if (!existingUser) {
+      console.warn(`User ${userData.id} does not exist, skipping update`);
+      return undefined;
+    }
+
+    const birthdayData = this.getBirthdayData(userData);
+    const existingBirthday = await this.userBirthdayRepository.findUserBirthdayByUserId(
+      userData.id
+    );
+
+    const updatedUserData = await this.updateUserAndBirthday(
+      userData,
+      birthdayData,
+      existingBirthday
+    );
+
+    console.log('User updated successfully:', {
+      id: updatedUserData.user.id,
+      name: `${updatedUserData.user.first_name} ${updatedUserData.user.last_name}`,
+    });
+    return updatedUserData;
   }
   async create(
     userData: UserData
   ): Promise<{ user: User; userBirthday?: UserBirthday } | undefined> {
     // Check if user already exists
+    console.log('Checking if user exists:', JSON.stringify(userData));
     const existingUser = await this.userRepository.findUserById(userData.id);
     if (existingUser) {
       console.log(`User ${userData.id} already exists, skipping insert`);
@@ -94,6 +125,62 @@ export class UserService {
       }
       return { user, userBirthday };
     });
+  }
+
+  private async updateUserAndBirthday(
+    userData: UserData,
+    birthdayData: NewUserBirthday | undefined,
+    existingBirthday: UserBirthday | undefined
+  ) {
+    return await this.transactionManager.runInTransaction(async trx => {
+      const user = await this.updateUserBasicInfo(userData, trx);
+      const userBirthday = await this.upsertUserBirthday(
+        userData.id,
+        birthdayData,
+        existingBirthday,
+        trx
+      );
+      return { user, userBirthday };
+    });
+  }
+
+  private async updateUserBasicInfo(userData: UserData, trx: KyselyTrx): Promise<User> {
+    const userUpdateData: UpdateUser = {
+      first_name: userData.firstName,
+      last_name: userData.lastName,
+    };
+    return await this.userRepository.updateUser(userData.id, userUpdateData, trx);
+  }
+
+  private async upsertUserBirthday(
+    userId: string,
+    birthdayData: NewUserBirthday | undefined,
+    existingBirthday: UserBirthday | undefined,
+    trx: KyselyTrx
+  ): Promise<UserBirthday | undefined> {
+    if (!birthdayData) {
+      return undefined;
+    }
+
+    if (existingBirthday) {
+      return await this.updateExistingBirthday(userId, birthdayData, trx);
+    }
+
+    return await this.userBirthdayRepository.createUserBirthday(birthdayData, trx);
+  }
+
+  private async updateExistingBirthday(
+    userId: string,
+    birthdayData: NewUserBirthday,
+    trx: KyselyTrx
+  ): Promise<UserBirthday> {
+    const birthdayUpdate: UpdateUserBirthday = {
+      day: birthdayData.day,
+      month: birthdayData.month,
+      year: birthdayData.year,
+      timezone: birthdayData.timezone,
+    };
+    return await this.userBirthdayRepository.updateUserBirthday(userId, birthdayUpdate, trx);
   }
 
   private getBirthdayData(userData: UserData) {

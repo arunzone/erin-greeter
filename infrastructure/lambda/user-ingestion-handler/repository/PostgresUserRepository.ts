@@ -1,10 +1,10 @@
 import { DeleteResult, Kysely } from 'kysely';
-import { Database, User, NewUser, KyselyTrx } from '../types';
+import { Database, User, NewUser, UpdateUser, KyselyTrx } from '../types';
 
 import { DatabaseConnectionManager } from './DatabaseConnectionManager';
 import { UserRepository } from './UserRepository';
 
-export class PostgresUserRepository implements UserRepository<User, NewUser> {
+export class PostgresUserRepository implements UserRepository<User, NewUser, UpdateUser> {
   constructor(private dbManager: DatabaseConnectionManager) {}
 
   private get db(): Kysely<Database> {
@@ -24,6 +24,15 @@ export class PostgresUserRepository implements UserRepository<User, NewUser> {
 
   async createUser(userData: NewUser, trx: KyselyTrx): Promise<User> {
     return await trx.insertInto('user').values(userData).returningAll().executeTakeFirstOrThrow();
+  }
+
+  async updateUser(id: string, userData: UpdateUser, trx: KyselyTrx): Promise<User> {
+    return await trx
+      .updateTable('user')
+      .set(userData)
+      .where('id', '=', id)
+      .returningAll()
+      .executeTakeFirstOrThrow();
   }
 
   async deleteUser(id: string, trx: KyselyTrx): Promise<DeleteResult> {

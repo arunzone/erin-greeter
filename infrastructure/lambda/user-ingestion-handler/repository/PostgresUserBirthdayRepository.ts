@@ -1,11 +1,18 @@
 import { DeleteResult, Kysely } from 'kysely';
-import { Database, UserBirthday, NewUserBirthday, BirthdayRecord, KyselyTrx } from '../types';
+import {
+  Database,
+  UserBirthday,
+  NewUserBirthday,
+  UpdateUserBirthday,
+  BirthdayRecord,
+  KyselyTrx,
+} from '../types';
 
 import { DatabaseConnectionManager } from './DatabaseConnectionManager';
 import { UserBirthdayRepository } from './UserBirthdayRepository';
 
 export class PostgresUserBirthdayRepository
-  implements UserBirthdayRepository<UserBirthday, NewUserBirthday, BirthdayRecord>
+  implements UserBirthdayRepository<UserBirthday, NewUserBirthday, UpdateUserBirthday, BirthdayRecord>
 {
   constructor(private dbManager: DatabaseConnectionManager) {}
 
@@ -16,6 +23,15 @@ export class PostgresUserBirthdayRepository
   async findAllBirthdays(): Promise<UserBirthday[]> {
     await this.dbManager.ensureConnection();
     return await this.db.selectFrom('user_birthday').selectAll().execute();
+  }
+
+  async findUserBirthdayByUserId(userId: string): Promise<UserBirthday | undefined> {
+    await this.dbManager.ensureConnection();
+    return await this.db
+      .selectFrom('user_birthday')
+      .selectAll()
+      .where('user_id', '=', userId)
+      .executeTakeFirst();
   }
 
   async findUserBirthdayByDayMonthTimezone(
@@ -56,6 +72,19 @@ export class PostgresUserBirthdayRepository
     return await trx
       .insertInto('user_birthday')
       .values(userBirthdayData)
+      .returningAll()
+      .executeTakeFirstOrThrow();
+  }
+
+  async updateUserBirthday(
+    userId: string,
+    userBirthdayData: UpdateUserBirthday,
+    trx: KyselyTrx
+  ): Promise<UserBirthday> {
+    return await trx
+      .updateTable('user_birthday')
+      .set(userBirthdayData)
+      .where('user_id', '=', userId)
       .returningAll()
       .executeTakeFirstOrThrow();
   }

@@ -1,4 +1,4 @@
-import { ColumnType, Generated, Insertable, Selectable, Transaction } from 'kysely';
+import { ColumnType, Generated, Insertable, Selectable, Transaction, Updateable } from 'kysely';
 
 export interface UserTable {
   id: string;
@@ -27,6 +27,8 @@ export type User = Selectable<UserTable>;
 export type UserBirthday = Selectable<UserBirthdayTable>;
 export type NewUser = Insertable<UserTable>;
 export type NewUserBirthday = Insertable<UserBirthdayTable>;
+export type UpdateUser = Updateable<UserTable>;
+export type UpdateUserBirthday = Updateable<UserBirthdayTable>;
 export type KyselyTrx = Transaction<Database>;
 
 export type BirthdayRecord = {
