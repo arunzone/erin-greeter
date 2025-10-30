@@ -1,7 +1,7 @@
 import { SQSEvent, SQSHandler, SQSBatchResponse } from 'aws-lambda';
 import { z } from 'zod';
 import { GreetingMessageSchema } from './model';
-import { DatabaseConnectionManager } from '../user-ingestion-handler/repository/DatabaseConnectionManager';
+import { DatabaseConnectionManager } from './repository/DatabaseConnectionManager';
 import { PostgresBirthdayGreetingRepository } from './repository/PostgresBirthdayGreetingRepository';
 import { HttpGreetingClient } from './client/HttpGreetingClient';
 import { BirthdayGreetingService } from './service/BirthdayGreetingService';
@@ -29,7 +29,7 @@ export const handler: SQSHandler = async (event: SQSEvent): Promise<SQSBatchResp
     } catch (error) {
       console.error(`Failed to process message ${record.messageId}:`, error);
       if (error instanceof z.ZodError) {
-        console.error('Validation errors:', JSON.stringify(error.errors, null, 2));
+        console.error('Validation errors:', JSON.stringify(error.issues, null, 2));
       }
 
       batchItemFailures.push({

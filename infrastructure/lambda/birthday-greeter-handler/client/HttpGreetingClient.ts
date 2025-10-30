@@ -1,4 +1,4 @@
-import axios from 'axios';
+import * as axios from 'axios';
 import { GreetingClient } from './GreetingClient';
 import { GreetingPayload } from '../types';
 
