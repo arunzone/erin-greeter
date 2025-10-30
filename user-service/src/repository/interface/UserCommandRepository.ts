@@ -8,4 +8,5 @@ export type CreateUserDto = {
 export interface UserCommandRepository<T> {
   create(data: CreateUserDto): Promise<T>;
   deleteById(id: string): Promise<boolean>;
+  update(id: string, data: Partial<T>): Promise<T>;
 }

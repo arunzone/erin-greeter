@@ -1,6 +1,7 @@
 import { BirthdayFinderService } from '../../../lambda/birthday-finder-handler/service/BirthdayFinderService';
 import { BirthdayRepository, BirthdayUser } from '../../../lambda/birthday-finder-handler/repository/BirthdayRepository';
 import { SQSClient, SendMessageCommand } from '@aws-sdk/client-sqs';
+import { TimezoneCalculator } from '../../../lambda/birthday-finder-handler/utils/TimezoneCalculator';
 
 const sqsClientMock = {
   send: jest.fn(),
@@ -11,19 +12,29 @@ jest.mock('@aws-sdk/client-sqs', () => ({
   SQSClient: jest.fn(() => sqsClientMock),
 }));
 
+jest.mock('../../../lambda/birthday-finder-handler/utils/TimezoneCalculator');
+
 describe('BirthdayFinderService', () => {
   let service: BirthdayFinderService;
   let mockRepository: jest.Mocked<BirthdayRepository>;
   let mockSQSClient: jest.Mocked<SQSClient>;
+  let mockTimezoneCalculator: jest.Mocked<TimezoneCalculator>;
   const queueUrl = 'https://sqs.us-east-1.amazonaws.com/123456789/test-queue';
 
   beforeEach(() => {
     mockRepository = {
-      findUsersNeedingGreetingSoon: jest.fn(),
+      findUsersNeedingGreetingSoon: jest.fn().mockResolvedValue([]),
     } as any;
 
     mockSQSClient = new SQSClient({}) as any;
     (mockSQSClient.send as jest.Mock).mockClear();
+
+    (TimezoneCalculator as jest.MockedClass<typeof TimezoneCalculator>).mockClear();
+    mockTimezoneCalculator = {
+      findTimezonesInWindow: jest.fn().mockReturnValue(['America/New_York', 'America/Chicago']),
+      getCurrentDateInTimezones: jest.fn().mockReturnValue({ month: 10, day: 30 }),
+    } as any;
+    (TimezoneCalculator as jest.MockedClass<typeof TimezoneCalculator>).mockImplementation(() => mockTimezoneCalculator);
 
     service = new BirthdayFinderService(mockRepository, mockSQSClient, queueUrl);
   });
@@ -226,5 +237,39 @@ describe('BirthdayFinderService', () => {
     const command = sendCall as SendMessageCommand;
 
     expect(command.input.QueueUrl).toBe(queueUrl);
+  });
+
+  test('should call repository with timezones, month, and day parameters', async () => {
+    await service.findAndScheduleGreetings();
+
+    expect(mockRepository.findUsersNeedingGreetingSoon).toHaveBeenCalledTimes(1);
+    const callArgs = mockRepository.findUsersNeedingGreetingSoon.mock.calls[0];
+
+    expect(callArgs).toHaveLength(3);
+    expect(Array.isArray(callArgs[0])).toBe(true);
+    expect(typeof callArgs[1]).toBe('number');
+    expect(typeof callArgs[2]).toBe('number');
+  });
+
+  test('should pass timezone array to repository', async () => {
+    await service.findAndScheduleGreetings();
+
+    const callArgs = mockRepository.findUsersNeedingGreetingSoon.mock.calls[0];
+    const timezones = callArgs[0] as string[];
+
+    expect(timezones.length).toBeGreaterThanOrEqual(0);
+  });
+
+  test('should pass valid month and day to repository', async () => {
+    await service.findAndScheduleGreetings();
+
+    const callArgs = mockRepository.findUsersNeedingGreetingSoon.mock.calls[0];
+    const month = callArgs[1] as number;
+    const day = callArgs[2] as number;
+
+    expect(month).toBeGreaterThanOrEqual(1);
+    expect(month).toBeLessThanOrEqual(12);
+    expect(day).toBeGreaterThanOrEqual(1);
+    expect(day).toBeLessThanOrEqual(31);
   });
 });

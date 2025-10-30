@@ -3,6 +3,7 @@ import { inject, injectable } from 'inversify';
 
 import { TYPES } from '../di/types.js';
 import { User } from '../domain/User.js';
+import { BadRequestError } from '../errors/HttpError.js';
 import prisma from '../prisma.js';
 import { uuidSchema } from '../validation/zod.js';
 
@@ -32,7 +33,7 @@ export class PostgressUserQueryRepository implements UserQueryRepository<User> {
   private validateUserId(id: string) {
     const parsed = uuidSchema.safeParse(id);
     if (!parsed.success) {
-      throw new Error('Invalid UUID');
+      throw new BadRequestError('Invalid user ID: must be a valid UUID');
     }
   }
 }

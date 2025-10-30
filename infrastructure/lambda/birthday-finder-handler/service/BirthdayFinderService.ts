@@ -1,6 +1,7 @@
 import { BirthdayRepository, BirthdayUser } from '../repository/BirthdayRepository';
 import { SQSClient, SendMessageCommand } from '@aws-sdk/client-sqs';
 import { DateTime } from 'luxon';
+import { TimezoneCalculator } from '../utils/TimezoneCalculator';
 
 export interface GreetingMessage {
   userId: string;
@@ -10,14 +11,21 @@ export interface GreetingMessage {
 }
 
 export class BirthdayFinderService {
+  private readonly timezoneCalculator: TimezoneCalculator;
+
   constructor(
     private readonly repository: BirthdayRepository,
     private readonly sqsClient: SQSClient,
-    private readonly queueUrl: string
-  ) {}
+    private readonly queueUrl: string,
+    targetHour: number = 9,
+    targetMinute: number = 0,
+    windowMinutes: number = 20
+  ) {
+    this.timezoneCalculator = new TimezoneCalculator(targetHour, targetMinute, windowMinutes);
+  }
 
   async findAndScheduleGreetings(): Promise<number> {
-    const users = await this.repository.findUsersNeedingGreetingSoon();
+    const users = await this.findUsersForGreetings();
 
     if (users.length === 0) {
       console.log('No users need birthday greetings at this time');
@@ -26,9 +34,25 @@ export class BirthdayFinderService {
 
     console.log(`Found ${users.length} users needing birthday greetings`);
 
-    await this.sendGreetingsWithLoadBalancing(users);
+    await this.scheduleGreetings(users);
 
     return users.length;
+  }
+
+  async findUsersForGreetings(): Promise<BirthdayUser[]> {
+    const timezones = this.timezoneCalculator.findTimezonesInWindow();
+
+    if (timezones.length === 0) {
+      return [];
+    }
+
+    const { month, day } = this.timezoneCalculator.getCurrentDateInTimezones(timezones);
+
+    return this.repository.findUsersNeedingGreetingSoon(timezones, month, day);
+  }
+
+  async scheduleGreetings(users: BirthdayUser[]): Promise<void> {
+    await this.sendGreetingsWithLoadBalancing(users);
   }
 
   private async sendGreetingsWithLoadBalancing(users: BirthdayUser[]): Promise<void> {

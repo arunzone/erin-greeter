@@ -16,6 +16,7 @@ export interface BirthdayGreeterProcessorProps {
   vpc: ec2.IVpc;
   database: rds.DatabaseInstance;
   databaseSecret: sm.Secret;
+  requestBinUrl?: string;
 }
 
 export class BirthdayGreeterProcessor extends Construct {
@@ -24,7 +25,7 @@ export class BirthdayGreeterProcessor extends Construct {
   constructor(scope: Construct, id: string, props: BirthdayGreeterProcessorProps) {
     super(scope, id);
 
-    const { greetingQueue, vpc, databaseSecret, database } = props;
+    const { greetingQueue, vpc, databaseSecret, database, requestBinUrl } = props;
 
     const lambdaPath = path.join(__dirname, '../../lambda/birthday-greeter-handler');
     const databaseConfigProps: DatabaseConfigProps = DatabaseConfigRetriever.getDatabaseConfig(
@@ -32,6 +33,12 @@ export class BirthdayGreeterProcessor extends Construct {
       database,
       databaseSecret
     );
+
+    const finalRequestBinUrl =
+      requestBinUrl ||
+      this.node.tryGetContext('requestBinUrl') ||
+      process.env.REQUESTBIN_URL ||
+      'b0f818921b926ade6951g1yi4kcyyyyyb.oast.me';
 
     this.fn = new NodejsFunction(this, 'BirthdayGreeterHandler', {
       vpc,
@@ -47,7 +54,7 @@ export class BirthdayGreeterProcessor extends Construct {
         DB_PASSWORD: databaseConfigProps.databasePassword,
         DB_NAME: databaseConfigProps.databaseName,
         SECRET_ARN: databaseSecret.secretArn,
-        REQUESTBIN_URL: process.env.REQUESTBIN_URL || 'https://webhook.site/unique-id',
+        REQUESTBIN_URL: finalRequestBinUrl,
       },
       timeout: cdk.Duration.seconds(60),
       memorySize: 512,

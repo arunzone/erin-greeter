@@ -14,25 +14,25 @@ export interface BirthdayUser {
 export class BirthdayRepository {
   constructor(private readonly db: Kysely<Database>) {}
 
-  async findUsersNeedingGreetingSoon(): Promise<BirthdayUser[]> {
+  async findUsersNeedingGreetingSoon(
+    timezones: string[],
+    month: number,
+    day: number
+  ): Promise<BirthdayUser[]> {
+    if (timezones.length === 0) {
+      return [];
+    }
+
+    const currentYear = new Date().getUTCFullYear();
+
     const results = await this.db
       .selectFrom('user_birthday as ub')
       .innerJoin('user as u', 'u.id', 'ub.user_id')
-      .where(
-        sql`EXTRACT(MONTH FROM (CURRENT_DATE AT TIME ZONE ub.timezone))`,
-        '=',
-        sql`ub.month`
-      )
-      .where(sql`EXTRACT(DAY FROM (CURRENT_DATE AT TIME ZONE ub.timezone))`, '=', sql`ub.day`)
+      .where('ub.timezone', 'in', timezones)
+      .where('ub.month', '=', month)
+      .where('ub.day', '=', day)
       .where(eb =>
-        eb.or([eb('ub.sent_year', 'is', null), eb('ub.sent_year', '<', sql`EXTRACT(YEAR FROM CURRENT_DATE)`)])
-      )
-      .where(
-        sql`
-        EXTRACT(HOUR FROM (CURRENT_TIMESTAMP AT TIME ZONE ub.timezone)) * 60 +
-        EXTRACT(MINUTE FROM (CURRENT_TIMESTAMP AT TIME ZONE ub.timezone))
-        BETWEEN 525 AND 545
-      `
+        eb.or([eb('ub.sent_year', 'is', null), eb('ub.sent_year', '<', currentYear)])
       )
       .select([
         'u.id as userId',

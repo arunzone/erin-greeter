@@ -1,12 +1,23 @@
 import { randomUUID } from 'crypto';
 
 import { User } from 'domain/User';
+import { BadRequestError } from 'errors/HttpError';
 import { PostgressUserQueryRepository } from 'repository/PostgressUserQueryRepository';
 
 import prisma from '../../src/prisma';
 
 describe('User Query Repository - find user by id', () => {
-  const repo = new PostgressUserQueryRepository();
+  const repo = new PostgressUserQueryRepository(prisma);
+  const createdUserIds: string[] = [];
+
+  afterEach(async () => {
+    // Clean up any users created during tests
+    if (createdUserIds.length > 0) {
+      await prisma.user.deleteMany({ where: { id: { in: createdUserIds } } });
+      createdUserIds.length = 0;
+    }
+  });
+
   afterAll(async () => {
     await prisma.$disconnect();
   });
@@ -20,6 +31,7 @@ describe('User Query Repository - find user by id', () => {
         birthday: new Date('2024-01-01'),
       } as any,
     } as any);
+    createdUserIds.push(created.id);
 
     const found = await repo.getById(created.id);
 
@@ -43,6 +55,7 @@ describe('User Query Repository - find user by id', () => {
         timeZone: 'Australia/Sydney',
       } as any,
     } as any);
+    createdUserIds.push(created.id);
 
     const found = await repo.getById(created.id);
 
@@ -66,6 +79,7 @@ describe('User Query Repository - find user by id', () => {
   });
 
   test('should throw on invalid UUID input', async () => {
-    await expect(repo.getById('not-a-uuid')).rejects.toThrow('Invalid UUID');
+    await expect(repo.getById('not-a-uuid')).rejects.toThrow(BadRequestError);
+    await expect(repo.getById('not-a-uuid')).rejects.toThrow('Invalid user ID: must be a valid UUID');
   });
 });

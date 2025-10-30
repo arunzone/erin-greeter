@@ -26,6 +26,10 @@ export class BirthdayGreetingStack extends cdk.Stack {
 
     const { database, databaseSecret, vpc } = props;
 
+    const requestBinUrl =
+      this.node.tryGetContext('requestBinUrl') ||
+      process.env.REQUESTBIN_URL;
+
     const queueConstruct = new BirthdayGreetingQueueConstruct(this, 'BirthdayGreetingQueues');
     this.greetingQueue = queueConstruct.queue;
     this.greetingDLQ = queueConstruct.dlq;
@@ -42,6 +46,7 @@ export class BirthdayGreetingStack extends cdk.Stack {
       database,
       databaseSecret,
       greetingQueue: this.greetingQueue,
+      requestBinUrl,
     });
   }
 }

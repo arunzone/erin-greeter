@@ -7,15 +7,18 @@ import { CreateUserDto, UserCommandRepository } from 'repository/interface/UserC
 import { UserQueryRepository } from 'repository/interface/UserQueryRepository';
 import { SqsService } from 'service/interface/SqsService';
 import UserService from 'service/UserService';
+import { UpdateUserDto } from 'controller/dto/UpdateUserDto';
 
 describe('UserService.create', () => {
   const makeCommandRepo = () => {
     const repo = {
       create: jest.fn(),
       deleteById: jest.fn(),
+      update: jest.fn(),
     } as unknown as UserCommandRepository<User> & {
       create: jest.MockedFunction<UserCommandRepository<User>['create']>;
       deleteById: jest.MockedFunction<UserCommandRepository<User>['deleteById']>;
+      update: jest.MockedFunction<UserCommandRepository<User>['update']>;
     };
     return repo;
   };
@@ -67,6 +70,7 @@ describe('UserService.create', () => {
       'Australia/Sydney',
       new Date('2024-01-01'),
       new Date('2024-01-02'),
+      undefined,
     );
 
     repo.create.mockResolvedValueOnce(expected);
@@ -93,6 +97,7 @@ describe('UserService.create', () => {
       'Australia/Sydney',
       new Date('2024-01-01'),
       new Date('2024-01-02'),
+      undefined,
     );
 
     repo.create.mockResolvedValueOnce(expected);
@@ -119,6 +124,7 @@ describe('UserService.create', () => {
       'Australia/Sydney',
       new Date('2024-01-01'),
       new Date('2024-01-02'),
+      undefined,
     );
 
     repo.create.mockResolvedValueOnce(expected);
@@ -145,6 +151,7 @@ describe('UserService.create', () => {
       'Australia/Sydney',
       new Date('2024-01-01'),
       new Date('2024-01-02'),
+      undefined,
     );
 
     repo.create.mockResolvedValueOnce(expected);
@@ -180,6 +187,7 @@ describe('UserService.create', () => {
       'Australia/Sydney',
       new Date('2024-01-01'),
       new Date('2024-01-02'),
+      undefined,
     );
 
     queryRepo.getById.mockResolvedValueOnce(user);
@@ -265,5 +273,209 @@ describe('UserService.create', () => {
 
     expect(commandRepo.deleteById).not.toHaveBeenCalled();
     expect(sqsService.sendUserEvent).not.toHaveBeenCalled();
+  });
+});
+
+describe('UserService.update', () => {
+  const makeCommandRepo = () => {
+    const repo = {
+      create: jest.fn(),
+      deleteById: jest.fn(),
+      update: jest.fn(),
+    } as unknown as UserCommandRepository<User> & {
+      create: jest.MockedFunction<UserCommandRepository<User>['create']>;
+      deleteById: jest.MockedFunction<UserCommandRepository<User>['deleteById']>;
+      update: jest.MockedFunction<UserCommandRepository<User>['update']>;
+    };
+    return repo;
+  };
+
+  const makeQueryRepo = () => {
+    const repo = {
+      getById: jest.fn(),
+    } as unknown as UserQueryRepository<User> & {
+      getById: jest.MockedFunction<UserQueryRepository<User>['getById']>;
+    };
+    return repo;
+  };
+
+  const makeSqsService = () => {
+    const sqsService = {
+      sendUserEvent: jest.fn(),
+    } as unknown as SqsService & {
+      sendUserEvent: jest.MockedFunction<SqsService['sendUserEvent']>;
+    };
+    return sqsService;
+  };
+
+  const makeService = (
+    commandRepo?: UserCommandRepository<User>,
+    queryRepo?: UserQueryRepository<User>,
+    sqsService?: SqsService,
+  ) => {
+    return new UserService(
+      commandRepo || makeCommandRepo(),
+      queryRepo || makeQueryRepo(),
+      sqsService || makeSqsService(),
+    );
+  };
+
+  const existingUser = new User(
+    '123e4567-e89b-12d3-a456-426614174000',
+    'OldFirstName',
+    'OldLastName',
+    'Australia/Sydney',
+    new Date('2024-01-01'),
+    new Date('2024-01-02'),
+  );
+
+  test('should call repository with given user details on update', async () => {
+    const commandRepo = makeCommandRepo();
+    const queryRepo = makeQueryRepo();
+    const sqsService = makeSqsService();
+    const service = makeService(commandRepo, queryRepo, sqsService);
+
+    queryRepo.getById.mockResolvedValueOnce(existingUser);
+    commandRepo.update.mockResolvedValueOnce(existingUser);
+
+    const updateDto: UpdateUserDto = {
+      firstName: 'NewFirstName',
+      lastName: 'NewLastName',
+      timeZone: 'America/New_York',
+    };
+
+    await service.update(existingUser.id, updateDto);
+
+    expect(queryRepo.getById).toHaveBeenCalledWith(existingUser.id);
+    expect(commandRepo.update).toHaveBeenCalledWith(existingUser.id, updateDto);
+  });
+
+  test('should return updated user when a user is updated', async () => {
+    const commandRepo = makeCommandRepo();
+    const queryRepo = makeQueryRepo();
+    const sqsService = makeSqsService();
+    const service = makeService(commandRepo, queryRepo, sqsService);
+
+    const updatedUser = new User(
+      existingUser.id,
+      'NewFirstName',
+      'NewLastName',
+      'America/New_York',
+      existingUser.createdAt,
+      new Date('2024-01-03'),
+    );
+
+    queryRepo.getById.mockResolvedValueOnce(existingUser);
+    commandRepo.update.mockResolvedValueOnce(updatedUser);
+
+    const updateDto: UpdateUserDto = {
+      firstName: 'NewFirstName',
+      lastName: 'NewLastName',
+      timeZone: 'America/New_York',
+    };
+
+    const result = await service.update(existingUser.id, updateDto);
+
+    expect(result).toBe(updatedUser);
+  });
+
+  test('should send SQS event when a user is updated', async () => {
+    const commandRepo = makeCommandRepo();
+    const queryRepo = makeQueryRepo();
+    const sqsService = makeSqsService();
+    const service = makeService(commandRepo, queryRepo, sqsService);
+
+    const updatedUser = new User(
+      existingUser.id,
+      'NewFirstName',
+      'NewLastName',
+      'America/New_York',
+      existingUser.createdAt,
+      new Date('2024-01-03'),
+    );
+
+    queryRepo.getById.mockResolvedValueOnce(existingUser);
+    commandRepo.update.mockResolvedValueOnce(updatedUser);
+
+    const updateDto: UpdateUserDto = {
+      firstName: 'NewFirstName',
+      lastName: 'NewLastName',
+      timeZone: 'America/New_York',
+    };
+
+    await service.update(existingUser.id, updateDto);
+
+    expect(sqsService.sendUserEvent).toHaveBeenCalledWith(updatedUser, UserEventType.UPDATED);
+  });
+
+  test('should send SQS event once when a user is updated', async () => {
+    const commandRepo = makeCommandRepo();
+    const queryRepo = makeQueryRepo();
+    const sqsService = makeSqsService();
+    const service = makeService(commandRepo, queryRepo, sqsService);
+
+    const updatedUser = new User(
+      existingUser.id,
+      'NewFirstName',
+      'NewLastName',
+      'America/New_York',
+      existingUser.createdAt,
+      new Date('2024-01-03'),
+    );
+
+    queryRepo.getById.mockResolvedValueOnce(existingUser);
+    commandRepo.update.mockResolvedValueOnce(updatedUser);
+
+    const updateDto: UpdateUserDto = {
+      firstName: 'NewFirstName',
+      lastName: 'NewLastName',
+      timeZone: 'America/New_York',
+    };
+
+    await service.update(existingUser.id, updateDto);
+
+    expect(sqsService.sendUserEvent).toHaveBeenCalledTimes(1);
+  });
+
+  test('should throw NotFoundError when user not found for update', async () => {
+    const commandRepo = makeCommandRepo();
+    const queryRepo = makeQueryRepo();
+    const sqsService = makeSqsService();
+    const service = makeService(commandRepo, queryRepo, sqsService);
+
+    queryRepo.getById.mockResolvedValueOnce(undefined);
+
+    const updateDto: UpdateUserDto = {
+      firstName: 'NewFirstName',
+      lastName: 'NewLastName',
+      timeZone: 'America/New_York',
+    };
+
+    await expect(service.update(existingUser.id, updateDto)).rejects.toBeInstanceOf(
+      NotFoundError,
+    );
+
+    expect(commandRepo.update).not.toHaveBeenCalled();
+    expect(sqsService.sendUserEvent).not.toHaveBeenCalled();
+  });
+
+  test('should propagate repository errors', async () => {
+    const commandRepo = makeCommandRepo();
+    const queryRepo = makeQueryRepo();
+    const sqsService = makeSqsService();
+    const service = makeService(commandRepo, queryRepo, sqsService);
+
+    queryRepo.getById.mockResolvedValueOnce(existingUser);
+    const err = new Error('db down');
+    commandRepo.update.mockRejectedValueOnce(err);
+
+    const updateDto: UpdateUserDto = {
+      firstName: 'NewFirstName',
+      lastName: 'NewLastName',
+      timeZone: 'America/New_York',
+    };
+
+    await expect(service.update(existingUser.id, updateDto)).rejects.toThrow('db down');
+    expect(commandRepo.update).toHaveBeenCalledWith(existingUser.id, updateDto);
   });
 });
