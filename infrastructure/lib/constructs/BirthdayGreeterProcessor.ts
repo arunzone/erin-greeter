@@ -37,11 +37,20 @@ export class BirthdayGreeterProcessor extends Construct {
     const finalRequestBinUrl =
       requestBinUrl ||
       this.node.tryGetContext('requestBinUrl') ||
-      process.env.REQUESTBIN_URL ||
-      'b0f818921b926ade6951g1yi4kcyyyyyb.oast.me';
+      process.env.REQUESTBIN_URL;
+
+    const birthdayGreeterSecurityGroup = new ec2.SecurityGroup(this, 'BirthdayGreeterSecurityGroup', {
+      vpc,
+      description: 'Security group for Birthday Greeter Lambda',
+      allowAllOutbound: true,
+    });
 
     this.fn = new NodejsFunction(this, 'BirthdayGreeterHandler', {
       vpc,
+      vpcSubnets: {
+        subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
+      },
+      securityGroups: [birthdayGreeterSecurityGroup],
       runtime: lambda.Runtime.NODEJS_22_X,
       entry: path.join(lambdaPath, 'index.ts'),
       handler: 'handler',

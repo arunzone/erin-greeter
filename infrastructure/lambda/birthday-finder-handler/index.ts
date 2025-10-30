@@ -15,7 +15,18 @@ export const handler = async (event: ScheduledEvent): Promise<void> => {
   });
 
   const queueUrl = process.env.GREETING_QUEUE_URL!;
-  const service = new BirthdayFinderService(repository, sqsClient, queueUrl);
+  const targetHour = parseInt(process.env.TARGET_HOUR || '9', 10);
+  const targetMinute = parseInt(process.env.TARGET_MINUTE || '0', 10);
+  const windowMinutes = parseInt(process.env.WINDOW_MINUTES || '20', 10);
+
+  const service = new BirthdayFinderService(
+    repository,
+    sqsClient,
+    queueUrl,
+    targetHour,
+    targetMinute,
+    windowMinutes
+  );
 
   try {
     const count = await service.findAndScheduleGreetings();

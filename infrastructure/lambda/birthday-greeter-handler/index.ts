@@ -7,6 +7,7 @@ import { HttpGreetingClient } from './client/HttpGreetingClient';
 import { BirthdayGreetingService } from './service/BirthdayGreetingService';
 
 export const handler: SQSHandler = async (event: SQSEvent): Promise<SQSBatchResponse> => {
+  console.log(`Processing ${JSON.stringify(event)} message`);
   console.log(`Processing ${event.Records.length} birthday greeting messages`);
 
   const dbManager = new DatabaseConnectionManager();
@@ -18,6 +19,7 @@ export const handler: SQSHandler = async (event: SQSEvent): Promise<SQSBatchResp
 
   for (const record of event.Records) {
     try {
+
       const messageBody = JSON.parse(record.body);
       const validatedMessage = GreetingMessageSchema.parse(messageBody);
 

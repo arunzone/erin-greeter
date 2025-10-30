@@ -3,6 +3,9 @@ import * as cdk from 'aws-cdk-lib';
 import { IngestStack } from '../lib/ingest-stack';
 import { MigrateStack } from '../lib/migrate-stack';
 import { BirthdayGreetingStack } from '../lib/birthday-greeting-stack';
+import * as dotenv from 'dotenv';
+
+dotenv.config();
 
 const app = new cdk.App();
 const ingestStack = new IngestStack(app, 'IngestStack');
