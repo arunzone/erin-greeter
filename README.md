@@ -153,14 +153,6 @@ npm test
 npm run dev
 ```
 
-**Coverage:**
-> Branches 72% • Functions 95% • Lines 96% • Statements 96%
-
-Linting:
-```bash
-npm run lint
-npm run lint:fix
-```
 
 ---
 
@@ -196,31 +188,6 @@ npm run lint:fix
 - **Serverless-first** → zero idle cost, auto-scaling
 - **Layered structure** → controller → service → repository → domain
 
-### Error Handling
-- 400 → Validation
-- 422 → Business logic
-- 404 → Not found
-- 500 → Internal errors
-- DLQ → Dead letters for failed greetings
-
-### Database Schema
-```sql
-users (
-  id UUID PRIMARY KEY,
-  first_name VARCHAR,
-  last_name VARCHAR,
-  email VARCHAR UNIQUE
-)
-
-user_birthday (
-  id UUID PRIMARY KEY,
-  user_id UUID REFERENCES users(id),
-  date_of_birth DATE,
-  timezone VARCHAR,
-  sent_year INTEGER
-)
-```
-
 ---
 
 ## 📁 Project Structure
@@ -246,15 +213,6 @@ erin-greeter/
 ├── docker-compose.yml
 └── README.md
 ```
-
----
-
-## 🤝 Contributing
-
-1. Fork
-2. Create a feature branch
-3. Commit with lint passing
-4. Submit PR
 
 ---
 

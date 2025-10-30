@@ -29,6 +29,7 @@ export class TimezoneCalculator {
       }
     }
 
+    console.log("matchingTimezones", matchingTimezones);
     return matchingTimezones;
   }
 
