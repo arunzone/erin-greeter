@@ -5,7 +5,7 @@ export class TimezoneCalculator {
   private readonly targetMinute: number;
   private readonly windowMinutes: number;
 
-  constructor(targetHour: number, targetMinute: number, windowMinutes: number = 20) {
+  constructor(targetHour: number, targetMinute: number, windowMinutes: number = 20, private readonly now: DateTime = DateTime.utc()) {
     this.targetHour = targetHour;
     this.targetMinute = targetMinute;
     this.windowMinutes = windowMinutes;
@@ -14,7 +14,7 @@ export class TimezoneCalculator {
   findTimezonesInWindow(): string[] {
     const allTimezones = Intl.supportedValuesOf('timeZone');
     const matchingTimezones: string[] = [];
-    const now = DateTime.utc();
+    const now = this.now;
 
     const targetMinutesFromMidnight = this.targetHour * 60 + this.targetMinute;
     const windowStart = targetMinutesFromMidnight - Math.floor(this.windowMinutes / 2);
@@ -34,11 +34,11 @@ export class TimezoneCalculator {
 
   getCurrentDateInTimezones(timezones: string[]): { month: number; day: number } {
     if (timezones.length === 0) {
-      const now = DateTime.utc();
+      const now = this.now;
       return { month: now.month, day: now.day };
     }
 
-    const now = DateTime.utc();
+    const now = this.now;
     const firstTimezone = timezones[0];
     const localDate = now.setZone(firstTimezone);
 

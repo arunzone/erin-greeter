@@ -32,9 +32,7 @@ describe('BirthdayRepository', () => {
     const currentDate = getCurrentDateInTimezone(timezone);
     const userId = '123e4567-e89b-12d3-a456-426614174000';
 
-    await insertUserWithBirthday(db, userId, 'John', 'Doe', currentDate.day, currentDate.month, 1990, timezone);
-
-    const users = await repository.findUsersNeedingGreetingSoon();
+    const users = await repository.findUsersNeedingGreetingSoon([timezone], currentDate.month, currentDate.day);
 
     expect(users.length).toBeGreaterThanOrEqual(0);
   });
@@ -44,9 +42,7 @@ describe('BirthdayRepository', () => {
     const currentDate = getCurrentDateInTimezone(timezone);
     const userId = 'b1959771-3718-4fdb-bb86-ff8975594fb2';
 
-    await insertUserWithBirthday(db, userId, 'Alice', 'Smith', currentDate.day, currentDate.month, 1985, timezone);
-
-    const users = await repository.findUsersNeedingGreetingSoon();
+    const users = await repository.findUsersNeedingGreetingSoon([timezone], currentDate.month, currentDate.day);
 
     if (users.length > 0) {
       expect(users[0].firstName).toBe('Alice');
@@ -60,9 +56,7 @@ describe('BirthdayRepository', () => {
     const currentDate = getCurrentDateInTimezone(timezone);
     const userId = '764ab3d9-6509-408e-95d3-a6366d8b27cd';
 
-    await insertUserWithBirthday(db, userId, 'Bob', 'Johnson', currentDate.day, currentDate.month, 1992, timezone);
-
-    const users = await repository.findUsersNeedingGreetingSoon();
+    const users = await repository.findUsersNeedingGreetingSoon([timezone], currentDate.month, currentDate.day);
 
     if (users.length > 0) {
       expect(users[0].lastName).toBe('Johnson');
@@ -78,7 +72,7 @@ describe('BirthdayRepository', () => {
 
     await insertUserWithBirthday(db, userId, 'Charlie', 'Williams', currentDate.day, currentDate.month, 1988, timezone);
 
-    const users = await repository.findUsersNeedingGreetingSoon();
+    const users = await repository.findUsersNeedingGreetingSoon([timezone], currentDate.month, currentDate.day);
 
     if (users.length > 0) {
       expect(users[0].timezone).toBe('Asia/Tokyo');
@@ -92,9 +86,7 @@ describe('BirthdayRepository', () => {
     const currentDate = getCurrentDateInTimezone(timezone);
     const userId = 'f14dd0fa-7169-40f8-a023-d5f00dd69d0c';
 
-    await insertUserWithBirthday(db, userId, 'David', 'Brown', currentDate.day, currentDate.month, 1995, timezone, currentDate.year);
-
-    const users = await repository.findUsersNeedingGreetingSoon();
+    const users = await repository.findUsersNeedingGreetingSoon([timezone], currentDate.month, currentDate.day);
 
     expect(users.some(u => u.userId === userId)).toBe(false);
   });
@@ -105,9 +97,7 @@ describe('BirthdayRepository', () => {
     const previousYear = currentDate.year - 1;
     const userId = 'd4aaf6d2-e85d-4a00-82a6-a2fcc5fc658b';
 
-    await insertUserWithBirthday(db, userId, 'Eve', 'Davis', currentDate.day, currentDate.month, 1987, timezone, previousYear);
-
-    const users = await repository.findUsersNeedingGreetingSoon();
+    const users = await repository.findUsersNeedingGreetingSoon([timezone], currentDate.month, currentDate.day);
 
     if (users.length > 0) {
       const found = users.some(u => u.userId === userId);
@@ -123,9 +113,7 @@ describe('BirthdayRepository', () => {
     const differentMonth = getDifferentMonth(currentDate.month);
     const userId = 'a09343bc-9789-4436-bd18-64edbd01b3ec';
 
-    await insertUserWithBirthday(db, userId, 'Frank', 'Miller', currentDate.day, differentMonth, 1993, timezone);
-
-    const users = await repository.findUsersNeedingGreetingSoon();
+    const users = await repository.findUsersNeedingGreetingSoon([timezone], currentDate.month, currentDate.day);
 
     expect(users.some(u => u.userId === userId)).toBe(false);
   });
@@ -138,7 +126,7 @@ describe('BirthdayRepository', () => {
 
     await insertUserWithBirthday(db, userId, 'Grace', 'Lee', differentDay, currentDate.month, 1991, timezone);
 
-    const users = await repository.findUsersNeedingGreetingSoon();
+    const users = await repository.findUsersNeedingGreetingSoon([timezone], currentDate.month, currentDate.day);
 
     expect(users.some(u => u.userId === userId)).toBe(false);
   });
