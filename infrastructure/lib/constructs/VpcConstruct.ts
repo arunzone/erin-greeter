@@ -3,6 +3,7 @@ import * as ec2 from 'aws-cdk-lib/aws-ec2';
 
 export interface VpcConstructProps {
   maxAzs?: number;
+  isLocal?: boolean;
 }
 
 export class VpcConstruct extends Construct {
@@ -10,9 +11,13 @@ export class VpcConstruct extends Construct {
 
   constructor(scope: Construct, id: string, props: VpcConstructProps = {}) {
     super(scope, id);
+
+    // LocalStack doesn't support NAT Gateways well, so use isolated subnets instead
+    const isLocal = props.isLocal ?? false;
+
     this.vpc = new ec2.Vpc(this, 'Vpc', {
       maxAzs: props.maxAzs ?? 2,
-      natGateways: 1,
+      natGateways: isLocal ? 0 : 1,
       subnetConfiguration: [
         {
           cidrMask: 24,
@@ -22,7 +27,7 @@ export class VpcConstruct extends Construct {
         {
           cidrMask: 24,
           name: 'Private',
-          subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
+          subnetType: isLocal ? ec2.SubnetType.PRIVATE_ISOLATED : ec2.SubnetType.PRIVATE_WITH_EGRESS,
         },
       ],
     });

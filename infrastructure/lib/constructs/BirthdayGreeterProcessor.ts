@@ -17,6 +17,7 @@ export interface BirthdayGreeterProcessorProps {
   database: rds.DatabaseInstance;
   databaseSecret: sm.Secret;
   requestBinUrl?: string;
+  isLocal?: boolean;
 }
 
 export class BirthdayGreeterProcessor extends Construct {
@@ -25,7 +26,7 @@ export class BirthdayGreeterProcessor extends Construct {
   constructor(scope: Construct, id: string, props: BirthdayGreeterProcessorProps) {
     super(scope, id);
 
-    const { greetingQueue, vpc, databaseSecret, database, requestBinUrl } = props;
+    const { greetingQueue, vpc, databaseSecret, database, requestBinUrl, isLocal } = props;
 
     const lambdaPath = path.join(__dirname, '../../lambda/birthday-greeter-handler');
     const databaseConfigProps: DatabaseConfigProps = DatabaseConfigRetriever.getDatabaseConfig(
@@ -45,10 +46,13 @@ export class BirthdayGreeterProcessor extends Construct {
       allowAllOutbound: true,
     });
 
+    // Use PRIVATE_ISOLATED for LocalStack (no NAT gateway), PRIVATE_WITH_EGRESS for AWS
+    const subnetType = isLocal ? ec2.SubnetType.PRIVATE_ISOLATED : ec2.SubnetType.PRIVATE_WITH_EGRESS;
+
     this.fn = new NodejsFunction(this, 'BirthdayGreeterHandler', {
       vpc,
       vpcSubnets: {
-        subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
+        subnetType,
       },
       securityGroups: [birthdayGreeterSecurityGroup],
       runtime: lambda.Runtime.NODEJS_22_X,

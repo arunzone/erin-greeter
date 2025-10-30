@@ -9,6 +9,7 @@ export interface DatabaseConstructProps {
   instanceType?: ec2.InstanceType;
   databaseName?: string;
   secret: sm.Secret;
+  isLocal?: boolean;
 }
 
 export class DatabaseConstruct extends Construct {
@@ -17,6 +18,9 @@ export class DatabaseConstruct extends Construct {
   constructor(scope: Construct, id: string, props: DatabaseConstructProps) {
     super(scope, id);
 
+    // Use PRIVATE_ISOLATED for LocalStack (no NAT gateway), PRIVATE_WITH_EGRESS for AWS
+    const subnetType = props.isLocal ? ec2.SubnetType.PRIVATE_ISOLATED : ec2.SubnetType.PRIVATE_WITH_EGRESS;
+
     this.instance = new rds.DatabaseInstance(this, 'RdsInstance', {
       engine: rds.DatabaseInstanceEngine.postgres({
         version: rds.PostgresEngineVersion.VER_14,
@@ -24,6 +28,9 @@ export class DatabaseConstruct extends Construct {
       instanceType:
         props.instanceType ?? ec2.InstanceType.of(ec2.InstanceClass.T3, ec2.InstanceSize.MICRO),
       vpc: props.vpc,
+      vpcSubnets: {
+        subnetType,
+      },
       allocatedStorage: 5,
       storageType: rds.StorageType.STANDARD,
       multiAz: false,

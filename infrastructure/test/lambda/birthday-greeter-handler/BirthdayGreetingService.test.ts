@@ -2,11 +2,14 @@ import { BirthdayGreetingService } from '../../../lambda/birthday-greeter-handle
 import { BirthdayGreetingRepository } from '../../../lambda/birthday-greeter-handler/repository/BirthdayGreetingRepository';
 import { GreetingClient } from '../../../lambda/birthday-greeter-handler/client/GreetingClient';
 import { GreetingMessage } from '../../../lambda/birthday-greeter-handler/model';
+import { TransactionManager } from '../../../lambda/birthday-greeter-handler/persistence/TransactionManager';
 
 describe('BirthdayGreetingService', () => {
   let service: BirthdayGreetingService;
   let mockBirthdayGreetingRepository: jest.Mocked<BirthdayGreetingRepository>;
   let mockGreetingClient: jest.Mocked<GreetingClient>;
+  let mockTransactionManager: jest.Mocked<TransactionManager>;
+  let mockTransaction: any;
 
   beforeEach(() => {
     mockBirthdayGreetingRepository = {
@@ -16,9 +19,18 @@ describe('BirthdayGreetingService', () => {
       sendGreeting: jest.fn(),
     };
 
+    // Mock transaction object
+    mockTransaction = {};
+
+    // Mock TransactionManager
+    mockTransactionManager = {
+      runInTransaction: jest.fn((callback) => callback(mockTransaction)),
+    } as any;
+
     service = new BirthdayGreetingService(
       mockBirthdayGreetingRepository,
-      mockGreetingClient
+      mockGreetingClient,
+      mockTransactionManager
     );
   });
 
@@ -38,9 +50,11 @@ describe('BirthdayGreetingService', () => {
 
     await service.processGreeting(message);
 
+    expect(mockTransactionManager.runInTransaction).toHaveBeenCalled();
     expect(mockBirthdayGreetingRepository.updateSentYear).toHaveBeenCalledWith(
       message.userId,
-      message.year
+      message.year,
+      mockTransaction
     );
     expect(mockGreetingClient.sendGreeting).toHaveBeenCalledTimes(1);
     expect(mockGreetingClient.sendGreeting).toHaveBeenCalledWith(
@@ -63,9 +77,11 @@ describe('BirthdayGreetingService', () => {
 
     await service.processGreeting(message);
 
+    expect(mockTransactionManager.runInTransaction).toHaveBeenCalled();
     expect(mockBirthdayGreetingRepository.updateSentYear).toHaveBeenCalledWith(
       message.userId,
-      message.year
+      message.year,
+      mockTransaction
     );
     expect(mockGreetingClient.sendGreeting).not.toHaveBeenCalled();
   });

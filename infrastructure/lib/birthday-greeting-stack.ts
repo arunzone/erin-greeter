@@ -26,6 +26,9 @@ export class BirthdayGreetingStack extends cdk.Stack {
 
     const { database, databaseSecret, vpc } = props;
 
+    const envType = this.node.tryGetContext('envType');
+    const isLocal = envType === 'local';
+
     const requestBinUrl =
       this.node.tryGetContext('requestBinUrl') ||
       process.env.REQUESTBIN_URL;
@@ -47,6 +50,7 @@ export class BirthdayGreetingStack extends cdk.Stack {
       databaseSecret,
       greetingQueue: this.greetingQueue,
       requestBinUrl,
+      isLocal,
     });
   }
 }

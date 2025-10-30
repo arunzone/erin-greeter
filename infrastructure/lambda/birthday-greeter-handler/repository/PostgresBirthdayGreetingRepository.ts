@@ -2,6 +2,7 @@ import { Kysely } from 'kysely';
 import { Database } from '../types';
 import { DatabaseConnectionManager } from './DatabaseConnectionManager';
 import { BirthdayGreetingRepository } from './BirthdayGreetingRepository';
+import { KyselyTrx } from '../persistence/TransactionManager';
 
 export class PostgresBirthdayGreetingRepository implements BirthdayGreetingRepository {
   constructor(private dbManager: DatabaseConnectionManager) {}
@@ -10,10 +11,12 @@ export class PostgresBirthdayGreetingRepository implements BirthdayGreetingRepos
     return this.dbManager.getDatabase();
   }
 
-  async updateSentYear(userId: string, year: number): Promise<boolean> {
+  async updateSentYear(userId: string, year: number, trx?: KyselyTrx): Promise<boolean> {
     await this.dbManager.ensureConnection();
 
-    const result = await this.db
+    const queryBuilder = trx || this.db;
+
+    const result = await queryBuilder
       .updateTable('user_birthday')
       .set({ sent_year: year })
       .where('user_id', '=', userId)

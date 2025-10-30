@@ -1,5 +1,5 @@
-import { UpdateResult } from 'kysely';
+import { KyselyTrx } from '../persistence/TransactionManager';
 
 export interface BirthdayGreetingRepository {
-  updateSentYear(userId: string, year: number): Promise<boolean>;
+  updateSentYear(userId: string, year: number, trx?: KyselyTrx): Promise<boolean>;
 }

@@ -22,7 +22,10 @@ export class IngestStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    const vpc = new VpcConstruct(this, 'Vpc').vpc;
+    const envType = this.node.tryGetContext('envType');
+    const isLocal = envType === 'local';
+
+    const vpc = new VpcConstruct(this, 'Vpc', { isLocal }).vpc;
 
     const databaseSecret = new SecretConstruct(this, 'Secret', { username: 'postgres' }).instance;
 
@@ -30,6 +33,7 @@ export class IngestStack extends cdk.Stack {
       vpc: vpc,
       databaseName: this.databaseName,
       secret: databaseSecret,
+      isLocal,
     }).instance;
 
     const queueConstruct = new QueuesConstruct(this, 'Queues');
