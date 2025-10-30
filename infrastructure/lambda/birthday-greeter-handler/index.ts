@@ -1,55 +1,35 @@
 import { SQSEvent, SQSHandler, SQSBatchResponse } from 'aws-lambda';
+import { z } from 'zod';
+import { GreetingMessageSchema } from './model';
 import { DatabaseConnectionManager } from '../user-ingestion-handler/repository/DatabaseConnectionManager';
-import axios from 'axios';
-import { sql } from 'kysely';
-
-interface GreetingMessage {
-  userId: string;
-  firstName: string;
-  lastName: string;
-  year: number;
-}
+import { PostgresBirthdayGreetingRepository } from './repository/PostgresBirthdayGreetingRepository';
+import { HttpGreetingClient } from './client/HttpGreetingClient';
+import { BirthdayGreetingService } from './service/BirthdayGreetingService';
 
 export const handler: SQSHandler = async (event: SQSEvent): Promise<SQSBatchResponse> => {
   console.log(`Processing ${event.Records.length} birthday greeting messages`);
 
   const dbManager = new DatabaseConnectionManager();
-  const db = dbManager.getDatabase();
-  const requestBinUrl = process.env.REQUESTBIN_URL!;
+  const repository = new PostgresBirthdayGreetingRepository(dbManager);
+  const greetingClient = new HttpGreetingClient(process.env.REQUESTBIN_URL!);
+  const service = new BirthdayGreetingService(repository, greetingClient);
 
   const batchItemFailures: SQSBatchResponse['batchItemFailures'] = [];
 
   for (const record of event.Records) {
     try {
-      const message: GreetingMessage = JSON.parse(record.body);
-      console.log(`Processing greeting for user ${message.userId}`);
+      const messageBody = JSON.parse(record.body);
+      const validatedMessage = GreetingMessageSchema.parse(messageBody);
 
-      const updated = await db
-        .updateTable('user_birthday')
-        .set({ sent_year: message.year })
-        .where('user_id', '=', message.userId)
-        .where(eb =>
-          eb.or([eb('sent_year', 'is', null), eb('sent_year', '<', message.year)])
-        )
-        .returning('id')
-        .executeTakeFirst();
+      await service.processGreeting(validatedMessage);
 
-      if (!updated) {
-        console.log(`User ${message.userId} already greeted this year, skipping`);
-        continue;
-      }
-
-      const greetingText = `Hey, ${message.firstName} ${message.lastName} it's your birthday!`;
-
-      await axios.post(requestBinUrl, {
-        message: greetingText,
-        userId: message.userId,
-        timestamp: new Date().toISOString(),
-      });
-
-      console.log(`Sent birthday greeting to ${message.firstName} ${message.lastName}`);
+      console.log(`Message ${record.messageId} processed successfully`);
     } catch (error) {
       console.error(`Failed to process message ${record.messageId}:`, error);
+      if (error instanceof z.ZodError) {
+        console.error('Validation errors:', JSON.stringify(error.errors, null, 2));
+      }
+
       batchItemFailures.push({
         itemIdentifier: record.messageId,
       });

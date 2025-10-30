@@ -16,15 +16,19 @@ export class VpcConstruct extends Construct {
       subnetConfiguration: [
         {
           cidrMask: 24,
-          name: 'Public', // Name is 'Public'
+          name: 'Public',
           subnetType: ec2.SubnetType.PUBLIC,
         },
         {
           cidrMask: 24,
-          name: 'Private', // Name is 'Private'
-          subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS, // Type is PRIVATE_WITH_EGRESS
+          name: 'Private',
+          subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
         },
       ],
+    });
+
+    this.vpc.addInterfaceEndpoint('SqsEndpoint', {
+      service: ec2.InterfaceVpcEndpointAwsService.SQS,
     });
   }
 }
