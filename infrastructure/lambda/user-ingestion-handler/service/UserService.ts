@@ -8,6 +8,7 @@ import {
   UpdateUserBirthday,
   UserBirthday,
   BirthdayRecord,
+  KyselyTrx,
 } from '../types';
 import { UserRepository } from '../repository/UserRepository';
 import { TransactionManager } from '../persistence/TransactionManager';
@@ -41,6 +42,7 @@ export class UserService {
     if (message.eventType === 'deleted') {
       return await this.delete(userData);
     }
+    return undefined;
   }
   async delete(
     userData: UserData
